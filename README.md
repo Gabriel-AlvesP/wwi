@@ -24,47 +24,47 @@ MR draft.
 
 #### [ ] **Sale**
 
-| Status | Column              | Content                    | Handling               |
-| :----: | ------------------- | -------------------------- | ---------------------- |
-|   x    | Sale Key            |                            | -                      |
-|   x    | City Key            | Sale City != Customer City | -                      |
-|   x    | Customer Key        |                            | -                      |
-|   x    | Stock Item key      |                            | into `StockItem_Sales` |
-|   x    | Invoice Date Key    |                            | Into `Invoices`        |
-|        | Delivery Date Key   |                            |                        |
-|        | Salesperson Key     |                            |                        |
-|        | WWI Invoice ID      |                            |                        |
-|        | Description         |                            |                        |
-|        | Package             |                            |                        |
-|        | Quantity            |                            |                        |
-|        | Unit Price          |                            |                        |
-|        | Tax Rate            |                            |                        |
-|        | Total Excluding Tax |                            |                        |
-|        | Tax Amount          |                            |                        |
-|        | Profit              |                            |                        |
-|        | Total Including Tax |                            |                        |
-|        | Total Dry Items     |                            |                        |
-|        | Total Chiller Items |                            |                        |
+| Status | Column              | Content                    | Handling                                            |
+| :----: | ------------------- | -------------------------- | --------------------------------------------------- |
+|   x    | Sale Key            |                            | -                                                   |
+|   x    | City Key            | Sale City != Customer City | FK from `City`                                      |
+|   x    | Customer Key        |                            | FK from `Customer`                                  |
+|   x    | Stock Item key      |                            | Into `SalesOrderDetails` Key (ManyToMany rel)       |
+|   x    | Invoice Date Key    |                            | Into `SalesOrderHeader` as DueDate                  |
+|   x    | Delivery Date Key   |                            | Into `SalesOrderHeader` as DeliverDate/ShipDate     |
+|   x    | Salesperson Key     |                            | FK from `Employee`                                  |
+|   x    | WWI Invoice ID      |                            | Into `SalesOrderHeader` as Key                      |
+|   x    | Description         |                            | Skipped (Same as `Stock Item` of `Stock Item`)      |
+|   x    | Package             |                            | Skipped (same as `Selling Package` of `Stock Item`) |
+|   x    | Quantity            |                            | Into `SalesOrderDetails`                            |
+|   x    | Unit Price          |                            | Skipped (Same as `Unit Price` of `Stock Item`)      |
+|        | Tax Rate            |                            |                                                     |
+|        | Total Excluding Tax |                            |                                                     |
+|        | Tax Amount          |                            |                                                     |
+|        | Profit              |                            |                                                     |
+|        | Total Including Tax |                            |                                                     |
+|   x    | Total Dry Items     |                            |                                                     |
+|   x    | Total Chiller Items |                            |                                                     |
 
 #### [ ] **Stock Item**
 
-| Status | Column                   | Content                  | Handling |
-| :----: | ------------------------ | ------------------------ | -------- |
-|   x    | Stock Item Key           | -                        |          |
-|        | Stock Item               | name (color) size/weight |          |
-|   x    | Color                    |                          |          |
-|        | Selling Package          |                          |          |
-|        | Buying Package           |                          |          |
-|   x    | Brand                    |                          |          |
-|   x    | Size                     |                          |          |
-|        | Lead Time Days           |                          |          |
-|        | Quantity Per Outer       |                          |          |
-|        | Is Chiller Stock         |                          |          |
-|   x    | Barcode                  |                          |          |
-|   x    | Tax Rate                 |                          |          |
-|   x    | Unit Price               |                          |          |
-|   x    | Recommended Retail Price |                          |          |
-|   x    | Typical Weight Per Unit  |                          |          |
+| Status | Column                   | Content                            | Handling                      |
+| :----: | ------------------------ | ---------------------------------- | ----------------------------- |
+|   x    | Stock Item Key           | -                                  |                               |
+|        | Stock Item               | name (color) size/weight           | ???                           |
+|   x    | Color                    |                                    | Into `Color` (ManyToMany rel) |
+|   x    | Selling Package          |                                    | -                             |
+|   x    | Buying Package           |                                    | -                             |
+|   x    | Brand                    |                                    | -                             |
+|   x    | Size                     |                                    | -                             |
+|   x    | Lead Time Days           |                                    | -                             |
+|        | Quantity Per Outer       |                                    |                               |
+|   x    | Is Chiller Stock         |                                    | -                             |
+|   x    | Barcode                  |                                    | -                             |
+|        | Tax Rate                 | Different from `Sale`'s `Tax Rate` | ???                           |
+|   x    | Unit Price               |                                    | -                             |
+|   x    | Recommended Retail Price |                                    | -                             |
+|   x    | Typical Weight Per Unit  |                                    | -                             |
 
 #### [x] **Customer**
 
