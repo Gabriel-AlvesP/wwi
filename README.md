@@ -2,27 +2,27 @@
 
 A database administration project.
 
-## TODO
+## [ ] ER
 
-### [ ] MR
+ER draft and decision making explanation.
 
-MR draft.
+### Old Tables Management
 
 #### [x] **Employee**
 
-| Status | Column         | Content | Handling   |
-| :----: | -------------- | ------- | ---------- |
-|   x    | Employee Key   |         | -          |
-|   x    | Employee       |         | Now `Name` |
-|   x    | Preferred Name |         | -          |
-|   x    | Is Salesperson |         | \*\*       |
-|   x    | Photo          |         | -          |
+| Status | Column         | Content | Handling       |
+| :----: | -------------- | ------- | -------------- |
+|   x    | Employee Key   |         | -              |
+|   x    | Employee       |         | Renamed `Name` |
+|   x    | Preferred Name |         | -              |
+|   x    | Is Salesperson |         | \*\*           |
+|   x    | Photo          |         | -              |
 
 **Notes** :
 
 \*\* Maybe i'll change it later
 
-#### [ ] **Sale**
+#### [x] **Sale**
 
 | Status | Column              | Content                    | Handling                                            |
 | :----: | ------------------- | -------------------------- | --------------------------------------------------- |
@@ -38,11 +38,11 @@ MR draft.
 |   x    | Package             |                            | Skipped (same as `Selling Package` of `Stock Item`) |
 |   x    | Quantity            |                            | Into `SalesOrderDetails`                            |
 |   x    | Unit Price          |                            | Skipped (Same as `Unit Price` of `Stock Item`)      |
-|        | Tax Rate            |                            |                                                     |
-|        | Total Excluding Tax |                            |                                                     |
-|        | Tax Amount          |                            |                                                     |
-|        | Profit              |                            |                                                     |
-|        | Total Including Tax |                            |                                                     |
+|   x    | Tax Rate            |                            | -                                                   |
+|   x    | Total Excluding Tax |                            | -                                                   |
+|   x    | Tax Amount          |                            | -                                                   |
+|   x    | Profit              |                            | Into `CompanyBills`                                 |
+|   x    | Total Including Tax |                            | Renamed (`LineTotal`)                               |
 |   x    | Total Dry Items     |                            |                                                     |
 |   x    | Total Chiller Items |                            |                                                     |
 
@@ -58,7 +58,7 @@ MR draft.
 |   x    | Brand                    |                                    | -                             |
 |   x    | Size                     |                                    | -                             |
 |   x    | Lead Time Days           |                                    | -                             |
-|        | Quantity Per Outer       |                                    |                               |
+|   x    | Quantity Per Outer       |                                    | Renamed ( PackageQuantity)    |
 |   x    | Is Chiller Stock         |                                    | -                             |
 |   x    | Barcode                  |                                    | -                             |
 |        | Tax Rate                 | Different from `Sale`'s `Tax Rate` | ???                           |
@@ -68,22 +68,22 @@ MR draft.
 
 #### [x] **Customer**
 
-| Status | Column           | Compound Content                                   | Handling                                                                |
-| :----: | ---------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
-|   x    | Customer Key     | -                                                  | -                                                                       |
-|   x    | WWI Customer ID  | -                                                  | Deleted                                                                 |
-|   x    | Customer         | BuyingGroup (Office - Head Office/City, StateCode) | -                                                                       |
-|   x    | Bill To Customer |                                                    | \*Into `sale`, self reference/relationship, or skipped ? - Into `Sales` |
-|   x    | Category         |                                                    | New Table `Categories`                                                  |
-|   x    | Buying Group     |                                                    | New Table `Buying Groups`                                               |
-|   x    | Primary Contact  |                                                    | -                                                                       |
-|   x    | Postal Code      | \*\*                                               | -                                                                       |
+| Status | Column           | Compound Content                          | Handling                                                                |
+| :----: | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+|   x    | Customer Key     | -                                         | -                                                                       |
+|   x    | WWI Customer ID  | -                                         | Deleted                                                                 |
+|   x    | Customer         | BuyingGroup (Head Office/City, StateCode) | Split into Customer and `CustomerCity`                                  |
+|   x    | Bill To Customer |                                           | \*Into `sale`, self reference/relationship, or skipped ? - Into `Sales` |
+|   x    | Category         |                                           | New Table `Categories`                                                  |
+|   x    | Buying Group     |                                           | New Table `Buying Groups`                                               |
+|   x    | Primary Contact  |                                           | -                                                                       |
+|   x    | Postal Code      | \*\*                                      | -                                                                       |
 
 **Notes** :
 
 \* `Sale` is appropriated if it can change or skipped if the bill is directed always to the HeadOffice of the `Buying group`
 
-\*\* Same PostalCode for different Cities, which means Cities and Postal Codes are not associated
+\*\* **Same PostalCode for different Cities, which means Cities and Postal Codes are not associated**
 
 #### [x] **City**
 
@@ -103,10 +103,23 @@ Repeated rows!!!
 
 #### [x] States (.txt)
 
+.txt file with some data.
+
 #### [x] Category (excel)
 
-### Filegroups
+Excel file with more data.
 
-### Migration
+### ER Decision Support
 
-### Migration Check
+#### **`SalesPerson` Table**
+
+It's an independent table (from the `Employee` table) for scalability purposes. Example:
+
+- CommissionRate
+- Earnings
+
+## Filegroups
+
+## Migration
+
+## Migration Check
