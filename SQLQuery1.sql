@@ -7,9 +7,6 @@ select * from City;
 select * from Customer;
 GO
 
-select * from City where [State Province] = 'Puerto Rico%' order by [Sales Territory] asc;
-
-
 --select
 --s.[WWI Invoice ID],
 --s.[Stock Item Key],
