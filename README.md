@@ -118,6 +118,14 @@ It's an independent table (from the `Employee` table) for scalability purposes. 
 - CommissionRate
 - Earnings
 
+### Questions
+
+1. Column `City Key`, table `Sale`: Is this key associate with something at all?
+
+2. Columns `Tax Rate`, tables `Sale` and `Stock Item`: ???
+
+3. Column `Sales Territory`, table `City`: Shouldn't it be somehow associate with `Sales`?
+
 ## Filegroups
 
 ## Migration
