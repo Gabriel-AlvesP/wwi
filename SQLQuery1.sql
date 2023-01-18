@@ -1,6 +1,6 @@
 use WWI_OldData;
 
-select * from Sale;
+select * from Sale order by [Sale Key] asc;
 select * from [Stock Item];
 select * from Employee;
 select * from City;

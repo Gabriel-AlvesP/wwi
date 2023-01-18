@@ -2,7 +2,7 @@
 
 A database administration project.
 
-## [ ] ER
+## ER
 
 ER draft and decision making explanation.
 
@@ -118,21 +118,26 @@ It's an independent table (from the `Employee` table) for scalability purposes. 
 - CommissionRate
 - Earnings
 
-#### **`City`**
+#### **`CityName`**
 
 Multiple cities with the same name. A separated table for cities is useful to minimize the repetition of city names.
 
-#### **`StatesProvince`**
+#### **`City`**
 
-It should have a Entry `NA` for countries that does not contain states.
+`StateProvinceCode` column :
 
-| Code | Name |
-| ---- | ---- |
-| NA   | N/A  |
+- To identify a city, since a country with states can have more than one cities with the same name
 
-#### **`Country_StateProvince`**
+`CountryId` column :
 
-In case the `Country` doesn't support `StateProvince` (e.g each country that has no state will be associated with `N/A` state) and if, for some reason, you need to identify a state country and this state is not referenced in the `City_Country_State`.
+- To identify the country if the state is not supported
+
+#### **`Postal Code`**
+
+Nullable `cityId` :
+
+- Because HeadOffice customers doesn't have city, only postal code !?
+- Which means there are unassociated postal codes :/ !?
 
 ### Questions
 
