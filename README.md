@@ -118,6 +118,22 @@ It's an independent table (from the `Employee` table) for scalability purposes. 
 - CommissionRate
 - Earnings
 
+#### **`City`**
+
+Multiple cities with the same name. A separated table for cities is useful to minimize the repetition of city names.
+
+#### **`StatesProvince`**
+
+It should have a Entry `NA` for countries that does not contain states.
+
+| Code | Name |
+| ---- | ---- |
+| NA   | N/A  |
+
+#### **`Country_StateProvince`**
+
+In case the `Country` doesn't support `StateProvince` (e.g each country that has no state will be associated with `N/A` state) and if, for some reason, you need to identify a state country and this state is not referenced in the `City_Country_State`.
+
 ### Questions
 
 1. Column `City Key`, table `Sale`: Is this key associate with something at all?
@@ -125,6 +141,8 @@ It's an independent table (from the `Employee` table) for scalability purposes. 
 2. Columns `Tax Rate`, tables `Sale` and `Stock Item`: ???
 
 3. Column `Sales Territory`, table `City`: Shouldn't it be somehow associate with `Sales`?
+
+4. Column `Delivery Date`, tables `Transport` and `SalesOrderHeader`: Why are those dates so different? Aren't they related?
 
 ## Filegroups
 
