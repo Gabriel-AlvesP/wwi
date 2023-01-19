@@ -8,21 +8,17 @@ ER draft and decision making explanation.
 
 ### Old Tables Management
 
-#### [x] **Employee**
+#### **Employee**
 
-| Status | Column         | Content | Handling       |
-| :----: | -------------- | ------- | -------------- |
-|   x    | Employee Key   |         | -              |
-|   x    | Employee       |         | Renamed `Name` |
-|   x    | Preferred Name |         | -              |
-|   x    | Is Salesperson |         | \*\*           |
-|   x    | Photo          |         | -              |
+| Status | Column         | Content | Handling                |
+| :----: | -------------- | ------- | ----------------------- |
+|   x    | Employee Key   |         | -                       |
+|   x    | Employee       |         | Renamed `Name`          |
+|   x    | Preferred Name |         | -                       |
+|   x    | Is Salesperson |         | New table `SalesPerson` |
+|   x    | Photo          |         | -                       |
 
-**Notes** :
-
-\*\* Maybe i'll change it later
-
-#### [x] **Sale**
+#### **Sale**
 
 | Status | Column              | Content                    | Handling                                            |
 | :----: | ------------------- | -------------------------- | --------------------------------------------------- |
@@ -46,12 +42,12 @@ ER draft and decision making explanation.
 |   x    | Total Dry Items     |                            |                                                     |
 |   x    | Total Chiller Items |                            |                                                     |
 
-#### [ ] **Stock Item**
+#### **Stock Item**
 
 | Status | Column                   | Content                            | Handling                      |
 | :----: | ------------------------ | ---------------------------------- | ----------------------------- |
 |   x    | Stock Item Key           | -                                  |                               |
-|        | Stock Item               | name (color) size/weight           | ???                           |
+|        | Stock Item               | name (color) size/weight           | spli format???                |
 |   x    | Color                    |                                    | Into `Color` (ManyToMany rel) |
 |   x    | Selling Package          |                                    | -                             |
 |   x    | Buying Package           |                                    | -                             |
@@ -61,12 +57,12 @@ ER draft and decision making explanation.
 |   x    | Quantity Per Outer       |                                    | Renamed ( PackageQuantity)    |
 |   x    | Is Chiller Stock         |                                    | -                             |
 |   x    | Barcode                  |                                    | -                             |
-|        | Tax Rate                 | Different from `Sale`'s `Tax Rate` | ???                           |
+|   x    | Tax Rate                 | Different from `Sale`'s `Tax Rate` | atm the same/ **with doubts** |
 |   x    | Unit Price               |                                    | -                             |
 |   x    | Recommended Retail Price |                                    | -                             |
 |   x    | Typical Weight Per Unit  |                                    | -                             |
 
-#### [x] **Customer**
+#### **Customer**
 
 | Status | Column           | Compound Content                          | Handling                                                                |
 | :----: | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
@@ -85,7 +81,7 @@ ER draft and decision making explanation.
 
 \*\* **Same PostalCode for different Cities, which means Cities and Postal Codes are not associated**
 
-#### [x] **City**
+#### - [x] **City**
 
 | Status | Column                     | Compound Content | Handling                    |
 | :----: | -------------------------- | ---------------- | --------------------------- |
@@ -99,15 +95,15 @@ ER draft and decision making explanation.
 
 **Notes** :
 
-Repeated rows!!!
+Table with repeated rows!!!
 
-#### [x] States (.txt)
+#### States (.txt)
 
-.txt file with some data.
+.txt file with US States and abbreviations.
 
-#### [x] Category (excel)
+#### Category (excel)
 
-Excel file with more data.
+Excel file with customers categories (e.g. gas station).
 
 ### ER Decision Support
 
@@ -118,11 +114,11 @@ It's an independent table (from the `Employee` table) for scalability purposes. 
 - CommissionRate
 - Earnings
 
-#### **`CityName`**
+#### **`CityName` Table**
 
 Multiple cities with the same name. A separated table for cities is useful to minimize the repetition of city names.
 
-#### **`City`**
+#### **`City` Table**
 
 `StateProvinceCode` column :
 
@@ -132,16 +128,20 @@ Multiple cities with the same name. A separated table for cities is useful to mi
 
 - To identify the country if the state is not supported
 
-#### **`Postal Code`**
+#### **`Postal Code` Table**
 
 Nullable `cityId` :
 
 - Because HeadOffice customers doesn't have city, only postal code !?
 - Which means there are unassociated postal codes :/ !?
 
-### Questions
+## Questions
 
-1. Column `City Key`, table `Sale`: Is this key associate with something at all?
+1. Column `City Key`, table `Sale`:
+
+    - Is this key associate with something at all? 
+    
+    - How can we know it when making a sale?
 
 2. Columns `Tax Rate`, tables `Sale` and `Stock Item`: ???
 
@@ -149,8 +149,9 @@ Nullable `cityId` :
 
 4. Column `Delivery Date`, tables `Transport` and `SalesOrderHeader`: Why are those dates so different? Aren't they related?
 
-## Filegroups
+## TODO
 
-## Migration
+- [ ] ER
+- [ ] Filegroups
+- [ ] Migration
 
-## Migration Check
