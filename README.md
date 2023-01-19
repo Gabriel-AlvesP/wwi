@@ -47,7 +47,7 @@ ER draft and decision making explanation.
 | Status | Column                   | Content                            | Handling                      |
 | :----: | ------------------------ | ---------------------------------- | ----------------------------- |
 |   x    | Stock Item Key           | -                                  |                               |
-|        | Stock Item               | name (color) size/weight           | spli format???                |
+|        | Stock Item               | name (color) size/weight           | split format???               |
 |   x    | Color                    |                                    | Into `Color` (ManyToMany rel) |
 |   x    | Selling Package          |                                    | -                             |
 |   x    | Buying Package           |                                    | -                             |
@@ -69,7 +69,7 @@ ER draft and decision making explanation.
 |   x    | Customer Key     | -                                         | -                                                                       |
 |   x    | WWI Customer ID  | -                                         | Deleted                                                                 |
 |   x    | Customer         | BuyingGroup (Head Office/City, StateCode) | Split into Customer and `CustomerCity`                                  |
-|   x    | Bill To Customer |                                           | \*Into `sale`, self reference/relationship, or skipped ? - Into `Sales` |
+|   x    | Bill To Customer |                                           | Into `sale`, self reference/relationship, or skipped ? - Into `Sales`\* |
 |   x    | Category         |                                           | New Table `Categories`                                                  |
 |   x    | Buying Group     |                                           | New Table `Buying Groups`                                               |
 |   x    | Primary Contact  |                                           | -                                                                       |
@@ -81,7 +81,7 @@ ER draft and decision making explanation.
 
 \*\* **Same PostalCode for different Cities, which means Cities and Postal Codes are not associated**
 
-#### - [x] **City**
+#### **City**
 
 | Status | Column                     | Compound Content | Handling                    |
 | :----: | -------------------------- | ---------------- | --------------------------- |
@@ -139,19 +139,26 @@ Nullable `cityId` :
 
 1. Column `City Key`, table `Sale`:
 
-    - Is this key associate with something at all? 
-    
-    - How can we know it when making a sale?
+   - Is this key associate with something at all?
+
+   - How can you know it when making a sale?
 
 2. Columns `Tax Rate`, tables `Sale` and `Stock Item`: ???
 
-3. Column `Sales Territory`, table `City`: Shouldn't it be somehow associate with `Sales`?
+3. Column `Sales Territory`, table `City`:
 
-4. Column `Delivery Date`, tables `Transport` and `SalesOrderHeader`: Why are those dates so different? Aren't they related?
+   - Shouldn't it be somehow associate with `Sales`?
+
+4. Column `Delivery Date`, tables `Transport` and `SalesOrderHeader`:
+
+   - Why are those dates so different? Aren't they related?
+
+5. Column `Postal Code`, table `Customer` :
+
+   - The `Postal Code` is identified by its own _code_ and the _city_ which it belongs to, since it's used the same postal code for different cities. However, there are 2 postal codes without cities!! How can you identify them?
 
 ## TODO
 
 - [ ] ER
 - [ ] Filegroups
 - [ ] Migration
-
