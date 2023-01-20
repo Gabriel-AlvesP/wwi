@@ -1,9 +1,10 @@
 use master;
+GO
 
 -- TODO:
 -- Create Db / Primary File Group
-create database WWIGlobal 
-    on primary ( --Tables: 
+create database WWIGlobal
+    on primary ( --Tables:
 	name = 'WWIPrimary',
     filename = 'D:\',
     size = 100MB,
@@ -18,7 +19,7 @@ create database WWIGlobal
     maxsize = 250MB,
     filegrowth = 20MB
     ),
-    
+
     (
 	name = '',
     filename = 'D:\',
@@ -43,7 +44,7 @@ create database WWIGlobal
     filegrowth = 2MB
     ),
 
-    filegroup ( --Tabelas: 
+    filegroup ( --Tabelas:
     	name = '',
         filename = 'D:\',
         size = 200MB,
@@ -59,11 +60,11 @@ create database WWIGlobal
     )
 
     -- Log File
-log on ( 
+log on (
     name = 'wwi_log.ldf',
     filename = 'D:\',
     SIZE = 500MB,
     MAXSIZE = 3000MB,
     FILEGROWTH = 500MB
 )
-go
+GO
