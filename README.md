@@ -107,6 +107,8 @@ Excel file with customers categories (e.g. gas station).
 
 ### ER Decision Support
 
+TODO: update
+
 #### **`SalesPerson` Table**
 
 It's an independent table (from the `Employee` table) for scalability purposes. Example:
@@ -159,6 +161,8 @@ Nullable `cityId` :
 
 ## TODO
 
-- [ ] ER
+- [x] ER
+- [x] DDL (data definition language) files (create + drop)
 - [ ] Filegroups
 - [ ] Migration
+- [ ] Migration check

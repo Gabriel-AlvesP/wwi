@@ -4,7 +4,7 @@ GO
 -- Product name pattern: name (Color) size
 select distinct si.[Stock Item], si.Brand, si.Color, si.Size, si.[Typical Weight Per Unit], si.[Quantity Per Outer] from [Stock Item] si;
 
---TODO
+--TODO:
 select * from Sale order by [Sale Key] asc;
 select * from [Stock Item];
 select * from Customer;
@@ -19,7 +19,7 @@ select AVG(LEN(e.Employee)) as 'Name',  AVG(Len(e.[Preferred Name])) as 'Prefere
 select Count(distinct e.Employee) as 'IsSalesman' from Employee e where e.[Is Salesperson] = 1;
 GO
 
--- From City Table 
+-- From City Table
 -- SalesTerritory
 select * from City;
 select count(distinct [Sales Territory]) from City;
@@ -36,7 +36,7 @@ select distinct Continent from City;
 select count(distinct Continent), AVG(LEN(Continent)) from City;
 GO
 
--- Country 
+-- Country
 select distinct Country from City;
 select count(distinct Country) as 'Distinct Countries', AVG(LEN(Country)) from City;
 GO
