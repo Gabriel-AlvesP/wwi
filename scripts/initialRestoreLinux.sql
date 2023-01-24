@@ -1,9 +1,9 @@
 use master;
 
-RESTORE DATABASE wwiOld
+RESTORE DATABASE WWI_OldData
 FROM DISK = '/var/opt/mssql/backup/WWI_DS.bak'
-WITH MOVE 'WWI_DS' TO '/var/opt/mssql/data/wwiOld.mdf',
-MOVE 'WWI_DS_Log' TO '/var/opt/mssql/data/wwiOld_log.ldf'
+WITH MOVE 'WWI_DS' TO '/var/opt/mssql/data/WWI_OldData.mdf',
+MOVE 'WWI_DS_Log' TO '/var/opt/mssql/data/WWI_OldData_log.ldf'
 GO
 
 -- Rename database (bc I screw up)

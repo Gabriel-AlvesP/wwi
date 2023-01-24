@@ -1,3 +1,5 @@
+use WWIGlobal;
+GO
 ALTER TABLE ErrorLogs DROP CONSTRAINT FKErrorLogs128846;
 ALTER TABLE Sales.SalesOrderHeader DROP CONSTRAINT FKSalesOrder501237;
 ALTER TABLE Stock.Color_Product DROP CONSTRAINT FKColor_Prod374161;
@@ -61,3 +63,4 @@ DROP TABLE IF EXISTS Location.City;
 DROP TABLE IF EXISTS Location.PostalCode;
 DROP TABLE IF EXISTS StateProvince_Country;
 DROP TABLE IF EXISTS Stock.Product;
+GO

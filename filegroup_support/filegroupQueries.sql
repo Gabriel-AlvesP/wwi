@@ -3,6 +3,7 @@ GO
 
 -- Product name pattern: name (Color) size
 select distinct si.[Stock Item], si.Brand, si.Color, si.Size, si.[Typical Weight Per Unit], si.[Quantity Per Outer] from [Stock Item] si;
+GO
 
 --TODO:
 select * from Sale order by [Sale Key] asc;

@@ -1,4 +1,4 @@
-use wwiOld;
+use WWIGlobal;
 GO
 CREATE SCHEMA Customers;
 CREATE SCHEMA Sales;
