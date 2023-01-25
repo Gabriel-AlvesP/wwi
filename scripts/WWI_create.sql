@@ -9,7 +9,7 @@ CREATE SCHEMA Shipments;
 GO
 CREATE TABLE IF NOT EXISTS Customers.Customer (
   CustomerId     int IDENTITY NOT NULL,
-  Name           varchar(255) NOT NULL,
+  Name           varchar(255),
   PrimaryContact varchar(255) NOT NULL,
   IsHeadOffice   bit NOT NULL,
   BuyingGroupId  int NOT NULL,

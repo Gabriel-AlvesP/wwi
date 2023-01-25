@@ -1,12 +1,6 @@
 use WWI_OldData;
 GO
 
---TODO:
-select * from Sale order by [Sale Key] asc;
-select * from [Stock Item];
-select * from Customer;
-GO
-
 -- Filegroup queries 
 -- The following group of queries are group by table names (new database)
 
@@ -88,3 +82,31 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%' 
 ) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
 -- The last where is essential bc of this pattern (something)(Color) -> something
+
+-- Product
+-- Product Model
+select [Stock Item] from [Stock Item];
+
+-- Color_Product
+select color, [Stock Item] from [Stock Item] where color != 'N/A' and color is not null and  [Stock Item] 
+	COLLATE Latin1_General_CS_AS 
+	not like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'; -- check for items without the color in the name and with the column color not null
+
+select count(substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item]))) as 'N Product w/ Color'
+	from [Stock Item] si
+	where si.[Stock Item] 
+	COLLATE Latin1_General_CS_AS 
+	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%';
+GO
+
+-- SalesOrderHeader, Bills
+select * from Sale order by [WWI Invoice ID];
+select count(distinct s.[WWI Invoice ID]) from Sale s;
+
+-- SalesOrderDetail
+select count(*) from Sale;
+
+-- Customer
+select * from Customer;
+select [WWI Customer ID], Customer from Customer;
+select count(distinct [WWI Customer ID]), count(distinct Customer) from Customer;
