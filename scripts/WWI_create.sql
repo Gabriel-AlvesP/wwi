@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS Error (
   PRIMARY KEY (ErrorId));
 CREATE TABLE IF NOT EXISTS CompanyResources.Employee (
   EmployeeId    int IDENTITY NOT NULL,
-  FirstName     varchar(60) NOT NULL,
-  LastName      varchar(60) NOT NULL,
+  FirstName     varchar(40) NOT NULL,
+  LastName      varchar(40) NOT NULL,
   PreferredName bit NOT NULL,
   Photo         varchar(255) NULL,
   PRIMARY KEY (EmployeeId));
@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS Stock.ProductModel (
   Brand                  varchar(255) NULL,
   [Size]                 varchar(20) NULL,
   Barcode                int NOT NULL,
-  StandardUnitCost       numeric(12, 2) NOT NULL,
-  RecommendedRetailPrice numeric(12, 2) NOT NULL,
+  StandardUnitCost       money NOT NULL,
+  RecommendedRetailPrice money NOT NULL,
   TaxRate                numeric(6, 3) NOT NULL,
   Weight                 numeric(8, 3) NOT NULL,
   IsChiller              bit NOT NULL,
@@ -94,27 +94,27 @@ CREATE TABLE IF NOT EXISTS Sales.SalesOrderHeader (
   CurrencyAbbreviation char(3) NOT NULL,
   IsChiller            bit NOT NULL,
   TotalItems           int NOT NULL,
-  TotalDue             numeric(12, 2) NOT NULL,
+  TotalDue             money NOT NULL,
   PRIMARY KEY (SaleId));
 CREATE TABLE IF NOT EXISTS Stock.Color (
   ColorId tinyint IDENTITY NOT NULL,
-  Name    varchar(255) NOT NULL UNIQUE,
+  Name    varchar(40) NOT NULL UNIQUE,
   PRIMARY KEY (ColorId));
 CREATE TABLE IF NOT EXISTS Stock.Color_Product (
   ColorsColorId   tinyint NOT NULL,
-  StockItemItemId int NOT NULL,
+  ProductModelId int NOT NULL,
   PRIMARY KEY (ColorsColorId,
-  StockItemItemId));
+  ProductModelId));
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderDetail (
   ProductId         int NOT NULL,
   SaleId            int NOT NULL,
   Quantity          smallint NOT NULL,
-  ListedUnitPrice   numeric(12, 2) NOT NULL,
-  TotalExcludingTax numeric(12, 2) NOT NULL,
+  ListedUnitPrice   money NOT NULL,
+  TotalExcludingTax money NOT NULL,
   TaxRate           numeric(6, 3) NOT NULL,
-  TaxAmount         numeric(12, 2) NOT NULL,
+  TaxAmount         money NOT NULL,
   DiscountId        int NULL,
-  LineTotal         numeric(12, 2) NOT NULL,
+  LineTotal         money NOT NULL,
   PRIMARY KEY (ProductId,
   SaleId));
 CREATE TABLE IF NOT EXISTS Customers.BuyingGroup (
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS Logs (
   UpdateDate datetime NOT NULL);
 CREATE TABLE IF NOT EXISTS CompanyResources.Bills (
   SaleId int NOT NULL,
-  Profit numeric(12, 2) NOT NULL,
+  Profit smallmoney NOT NULL,
   PRIMARY KEY (SaleId));
 CREATE TABLE IF NOT EXISTS Location.Address (
   AddressId  int IDENTITY NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS Sales.Currency (
 CREATE TABLE IF NOT EXISTS Sales.Salesperson (
   SalespersonId  int NOT NULL,
   CommissionRate tinyint NOT NULL,
-  Earnings       numeric(12, 2) NOT NULL,
+  Earnings       money NOT NULL,
   PRIMARY KEY (SalespersonId));
 CREATE TABLE IF NOT EXISTS Sales.CurrencyRate (
   FromCurrency char(3) NOT NULL,
@@ -162,10 +162,10 @@ CREATE TABLE IF NOT EXISTS Sales.CurrencyRate (
   PRIMARY KEY (FromCurrency,
   ToCurrency));
 CREATE TABLE IF NOT EXISTS Predictions (
-  TableName       varchar(255) NOT NULL,
-  EntriesNumber   bigint NOT NULL,
-  EstimatedMemory bigint NOT NULL,
-  UpdateDate      datetime NOT NULL);
+  TableName        varchar(255) NOT NULL,
+  EntriesNumber    bigint NOT NULL,
+  EstimatedStorage bigint NOT NULL,
+  UpdateDate       datetime NOT NULL);
 CREATE TABLE IF NOT EXISTS Shipments.Logistic (
   LogisticId int IDENTITY NOT NULL,
   Name       varchar(255) NOT NULL,
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS Shipments.Transport (
   PRIMARY KEY (SaleId));
 CREATE TABLE IF NOT EXISTS Location.Continent (
   ContinentId tinyint IDENTITY NOT NULL,
-  Name        varchar(255) NOT NULL UNIQUE,
+  Name        varchar(25) NOT NULL UNIQUE,
   PRIMARY KEY (ContinentId));
 CREATE TABLE IF NOT EXISTS Location.City (
   CityId            int IDENTITY NOT NULL,
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS Location.City (
 CREATE TABLE IF NOT EXISTS Location.PostalCode (
   Code int IDENTITY NOT NULL,
   PRIMARY KEY (Code));
-CREATE TABLE IF NOT EXISTS StateProvince_Country (
+CREATE TABLE IF NOT EXISTS Location.StateProvince_Country (
   StateProvinceCode char(2) NOT NULL,
   CountryId         tinyint NOT NULL,
   PRIMARY KEY (StateProvinceCode,
@@ -203,7 +203,7 @@ GO
 ALTER TABLE ErrorLogs ADD CONSTRAINT FKErrorLogs128846 FOREIGN KEY (ErrorId) REFERENCES Error (ErrorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder501237 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod374161 FOREIGN KEY (ColorsColorId) REFERENCES Stock.Color (ColorId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod267232 FOREIGN KEY (StockItemItemId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod267232 FOREIGN KEY (ProductModelId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder561622 FOREIGN KEY (ProductId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder444426 FOREIGN KEY (SaleId) REFERENCES Sales.SalesOrderHeader (SaleId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer989078 FOREIGN KEY (BuyingGroupId) REFERENCES Customers.BuyingGroup (BuyingGroupId) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -227,8 +227,8 @@ ALTER TABLE Location.Address ADD CONSTRAINT FKAddress489264 FOREIGN KEY (CityId)
 ALTER TABLE Location.Address ADD CONSTRAINT FKAddress632364 FOREIGN KEY (PostalCode) REFERENCES Location.PostalCode (Code) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer133437 FOREIGN KEY (AddressId) REFERENCES Location.Address (AddressId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.Salesperson ADD CONSTRAINT FKSalesperso253703 FOREIGN KEY (SalespersonId) REFERENCES CompanyResources.Employee (EmployeeId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi145043 FOREIGN KEY (StateProvinceCode) REFERENCES Location.StateProvince (Code) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi235227 FOREIGN KEY (CountryId) REFERENCES Location.Country (CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Location.StateProvince_Country ADD CONSTRAINT FKStateProvi145043 FOREIGN KEY (StateProvinceCode) REFERENCES Location.StateProvince (Code) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Locatin.StateProvince_Country ADD CONSTRAINT FKStateProvi235227 FOREIGN KEY (CountryId) REFERENCES Location.Country (CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Location.City ADD CONSTRAINT FKCity262519 FOREIGN KEY (StateProvinceCode, CountryId) REFERENCES StateProvince_Country (StateProvinceCode, CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod591355 FOREIGN KEY (ProductId) REFERENCES Stock.Product (ProductId) ON DELETE CASCADE ON UPDATE CASCADE;
 GO
