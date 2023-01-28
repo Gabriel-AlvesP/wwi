@@ -1,4 +1,5 @@
 use master;
+GO
 
 RESTORE DATABASE WWI_OldData
 FROM DISK = '/var/opt/mssql/backup/WWI_DS.bak'
