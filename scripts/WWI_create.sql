@@ -7,6 +7,7 @@ CREATE SCHEMA Stock;
 CREATE SCHEMA Location;
 CREATE SCHEMA Shipments;
 GO
+--TODO: Assign filegroups
 CREATE TABLE IF NOT EXISTS Customers.Customer (
   CustomerId     int IDENTITY NOT NULL,
   Name           varchar(255),
@@ -121,7 +122,7 @@ CREATE TABLE IF NOT EXISTS Customers.BuyingGroup (
   BuyingGroupId int IDENTITY NOT NULL,
   Name          varchar(255) NOT NULL UNIQUE,
   PRIMARY KEY (BuyingGroupId));
-CREATE TABLE IF NOT EXISTS Logs (
+CREATE TABLE IF NOT EXISTS Monitoring (
   [Schema]   varchar(255) NOT NULL,
   TableName  varchar(255) NOT NULL,
   ColumnName varchar(255) NOT NULL,
@@ -161,7 +162,7 @@ CREATE TABLE IF NOT EXISTS Sales.CurrencyRate (
   UpdateDate   datetime NOT NULL,
   PRIMARY KEY (FromCurrency,
   ToCurrency));
-CREATE TABLE IF NOT EXISTS Predictions (
+CREATE TABLE IF NOT EXISTS Estimation (
   TableName        varchar(255) NOT NULL,
   EntriesNumber    bigint NOT NULL,
   EstimatedStorage bigint NOT NULL,

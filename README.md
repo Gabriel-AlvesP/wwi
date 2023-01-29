@@ -8,6 +8,12 @@ ER draft and decision making explanation.
 
 ### Old Tables Management
 
+FIX: Change Salesperson -> `SalesOrderheader` relationship to one-to-many
+FIX: ProductModel put `BuyingPackage/SellingPackage` into a dedicated table
+FIX: ProductModel put `brand` into a dedicated table
+FIX: Remove 'unique' from `Address`
+NOTE: Prediction -> estimations
+
 #### **Employee**
 
 | Status | Column         | Content | Handling                |
@@ -135,7 +141,7 @@ Multiple cities with the same name. A separated table for cities is useful to mi
 Nullable `cityId` :
 
 - Because HeadOffice customers doesn't have city, only postal code !?
-- Which means there are unassociated postal codes :/ !?
+- Which means there are some cities that are not associated with a postal code :/ !?
 
 ## Questions
 
