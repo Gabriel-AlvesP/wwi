@@ -83,15 +83,15 @@ ER draft and decision making description.
 
 #### **City**
 
-| Status | Column                     | Content          | Handling                    |
-| :----: | -------------------------- | ---------------- | --------------------------- |
-|   x    | City Key                   |                  | -                           |
-|   x    | City                       |                  | -                           |
-|   x    | State Province             |                  | Into `States` (May be null) |
-|   x    | Country                    |                  | Into `Countries`            |
-|   x    | Continent                  |                  | Into `Countries`            |
-|   x    | Sales Territory            |                  | Into `Sales Territories`    |
-|   x    | Latest Recorded Population |                  | -                           |
+| Status | Column                     | Content | Handling                    |
+| :----: | -------------------------- | ------- | --------------------------- |
+|   x    | City Key                   |         | -                           |
+|   x    | City                       |         | -                           |
+|   x    | State Province             |         | Into `States` (May be null) |
+|   x    | Country                    |         | Into `Countries`            |
+|   x    | Continent                  |         | Into `Countries`            |
+|   x    | Sales Territory            |         | Into `Sales Territories`    |
+|   x    | Latest Recorded Population |         | -                           |
 
 **Notes** :
 
@@ -153,17 +153,7 @@ Nullable `cityId` :
 
    - The `Postal Code` is identified by its own _code_ and the _city_ which it belongs to, since it's used the same postal code for different cities. However, there are 2 postal codes without cities!! How can you identify them?
 
-## Issues
-
-FIX: Change Salesperson -> `SalesOrderheader` relationship to one-to-many
-
-FIX: ProductModel put `BuyingPackage/SellingPackage` into a dedicated table
-
-FIX: ProductModel put `brand` into a dedicated table
-
-FIX: Remove 'unique' from `Address`
-
-NOTE: Prediction -> estimations (ER)
+## Known Issues
 
 ## TODO
 
