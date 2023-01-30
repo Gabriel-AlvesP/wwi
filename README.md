@@ -4,15 +4,9 @@ A database administration project.
 
 ## ER
 
-ER draft and decision making explanation.
+ER draft and decision making description.
 
 ### Old Tables Management
-
-FIX: Change Salesperson -> `SalesOrderheader` relationship to one-to-many
-FIX: ProductModel put `BuyingPackage/SellingPackage` into a dedicated table
-FIX: ProductModel put `brand` into a dedicated table
-FIX: Remove 'unique' from `Address`
-NOTE: Prediction -> estimations
 
 #### **Employee**
 
@@ -70,7 +64,7 @@ NOTE: Prediction -> estimations
 
 #### **Customer**
 
-| Status | Column           | Compound Content                          | Handling                                                                |
+| Status | Column           | Content                                   | Handling                                                                |
 | :----: | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
 |   x    | Customer Key     | -                                         | -                                                                       |
 |   x    | WWI Customer ID  | -                                         | Deleted                                                                 |
@@ -89,7 +83,7 @@ NOTE: Prediction -> estimations
 
 #### **City**
 
-| Status | Column                     | Compound Content | Handling                    |
+| Status | Column                     | Content          | Handling                    |
 | :----: | -------------------------- | ---------------- | --------------------------- |
 |   x    | City Key                   |                  | -                           |
 |   x    | City                       |                  | -                           |
@@ -105,15 +99,13 @@ Table with repeated rows!!!
 
 #### States (.txt)
 
-.txt file with US States and abbreviations.
+.txt file with States and its abbreviations - StateProvince
 
-#### Category (excel)
+#### Category (.xlsx)
 
-Excel file with customers categories (e.g. gas station).
+.xlsx file with customers categories (e.g. gas station) - businessCategories
 
 ### ER Decision Support
-
-TODO: update
 
 #### **`SalesPerson` Table**
 
@@ -128,19 +120,15 @@ Multiple cities with the same name. A separated table for cities is useful to mi
 
 #### **`City` Table**
 
-`StateProvinceCode` column :
+`StateProvinceCode` + `CountryId` columns :
 
-- To identify a city, since a country with states can have more than one cities with the same name
+- A city is identified by the state and country because there are multiple cities with the same name in different states and (possibly) countries.
 
-`CountryId` column :
-
-- To identify the country if the state is not supported
-
-#### **`Postal Code` Table**
+#### **`Address` Table**
 
 Nullable `cityId` :
 
-- Because HeadOffice customers doesn't have city, only postal code !?
+- Because HeadOffice customers don't have city, only postal code !?
 - Which means there are some cities that are not associated with a postal code :/ !?
 
 ## Questions
@@ -164,6 +152,18 @@ Nullable `cityId` :
 5. Column `Postal Code`, table `Customer` :
 
    - The `Postal Code` is identified by its own _code_ and the _city_ which it belongs to, since it's used the same postal code for different cities. However, there are 2 postal codes without cities!! How can you identify them?
+
+## Issues
+
+FIX: Change Salesperson -> `SalesOrderheader` relationship to one-to-many
+
+FIX: ProductModel put `BuyingPackage/SellingPackage` into a dedicated table
+
+FIX: ProductModel put `brand` into a dedicated table
+
+FIX: Remove 'unique' from `Address`
+
+NOTE: Prediction -> estimations (ER)
 
 ## TODO
 
