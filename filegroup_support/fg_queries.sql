@@ -1,20 +1,24 @@
-use WWI_OldData;
+use WWI_OldData
 GO
 
--- Filegroup queries 
+-- In business time (01/01/2013 - 31/05/2016)
+select MIN([Invoice Date Key]), MAX([Invoice Date Key]) from Sale ;
+go
+
+-- Filegroup queries
 -- The following group of queries are group by table names (new database)
 
 -- Employee
 select Employee,
-	substring(Employee, 1, charindex(' ', Employee)-1) as 'firstname', 
-	substring(Employee, charindex(' ', Employee)+1, LEN(Employee)) as 'lastname' 
+	substring(Employee, 1, charindex(' ', Employee)-1) as 'firstname',
+	substring(Employee, charindex(' ', Employee)+1, LEN(Employee)) as 'lastname'
 from (select distinct Employee from Employee) e; -- All name, first name, last name
 
 select count(distinct Employee) as 'Different Names' from Employee; -- Number of different names
 
 select
-	AVG(LEN(substring(Employee, 1, charindex(' ', Employee)-1))) as 'firstname', 
-	AVG(LEN(substring(Employee, charindex(' ', Employee)+1, LEN(Employee)))) as 'lastname' 
+	AVG(LEN(substring(Employee, 1, charindex(' ', Employee)-1))) as 'firstname',
+	AVG(LEN(substring(Employee, charindex(' ', Employee)+1, LEN(Employee)))) as 'lastname'
 from (select distinct Employee from Employee) e; -- 1s and Last names average length
 GO
 
@@ -30,7 +34,15 @@ GO
 
 -- City Name
 select count(City), count(distinct City) as 'Different Cities' from City;
-select AVG(LEN(City)) as 'Avg Len' from (select distinct City from City) c;
+select AVG(LEN(City)) as 'Avg Len' from (select distinct City from City) c; --'
+GO
+
+-- ISSUE: City table entries count error in xlsx and filegroup
+
+-- (City, State Province) different entries
+select city, [State Province], Count(*) from City group by City, [State Province] order by city;
+GO
+select count(city) from (select city from City group by City, [State Province]) x;
 GO
 
 -- Continent
@@ -52,7 +64,7 @@ GO
 select distinct [Sales Territory] from City;
 GO
 
--- Postal Code 
+-- Postal Code
 select count([Postal Code]), count(distinct [Postal Code]) as 'Different Postal Codes' from Customer;
 GO
 
@@ -75,11 +87,11 @@ select [Stock Item] from [Stock Item] si where si.[Stock Item] COLLATE Latin1_Ge
 
 select distinct Color from [Stock Item];
 select distinct substring(x, 1, charindex(')', x)-1) as color from (
-	select substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item])) as x 
+	select substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item])) as x
 	from [Stock Item] si
-	where si.[Stock Item] 
-	COLLATE Latin1_General_CS_AS 
-	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%' 
+	where si.[Stock Item]
+	COLLATE Latin1_General_CS_AS
+	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
 ) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
 -- The last where is essential bc of this pattern (something)(Color) -> something
 
@@ -88,14 +100,14 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 select [Stock Item] from [Stock Item];
 
 -- Color_Product
-select color, [Stock Item] from [Stock Item] where color != 'N/A' and color is not null and  [Stock Item] 
-	COLLATE Latin1_General_CS_AS 
+select color, [Stock Item] from [Stock Item] where color != 'N/A' and color is not null and  [Stock Item]
+	COLLATE Latin1_General_CS_AS
 	not like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'; -- check for items without the color in the name and with the column color not null
 
 select count(substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item]))) as 'N Product w/ Color'
 	from [Stock Item] si
-	where si.[Stock Item] 
-	COLLATE Latin1_General_CS_AS 
+	where si.[Stock Item]
+	COLLATE Latin1_General_CS_AS
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%';
 GO
 

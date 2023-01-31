@@ -1,3 +1,5 @@
+--TODO: UPDATE ALL FILE
+--TODO: Assign filegroups
 use WWIGlobal;
 GO
 CREATE SCHEMA Customers;
@@ -7,7 +9,6 @@ CREATE SCHEMA Stock;
 CREATE SCHEMA Location;
 CREATE SCHEMA Shipments;
 GO
---TODO: Assign filegroups
 CREATE TABLE IF NOT EXISTS Customers.Customer (
   CustomerId     int IDENTITY NOT NULL,
   Name           varchar(255),
