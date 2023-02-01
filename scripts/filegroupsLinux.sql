@@ -31,7 +31,7 @@ filegroup (
 
 -- Features: +Read, +/-Write
 -- Tables: City, BusinessCategory, Logistic, Currency, PostalCode, Color, Error, Discount, Token
--- Tables Initial Avg storage: 349080 + 70 + 18 + 16 + 1268 + 99 = 350551 + Error + Discount + Token
+-- Tables Initial Avg storage: 569100 + 70 + 18 + 16 + 1268 + 99 = 570570 + Error + Discount + Token
 filegroup (
     name = 'wwi_fg2_1',
     filename = '/var/opt/mssql/data/wwi_fg2.ndf',

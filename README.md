@@ -79,7 +79,7 @@ ER draft and decision making description.
 
 \* `Sale` is appropriated if it can change or skipped if the bill is directed always to the HeadOffice of the `Buying group`
 
-\*\* **Same PostalCode for different Cities, which means Cities and Postal Codes are not associated**
+\*\* **Same PostalCode for different Cities, which means there are Cities with the same postal code => A place cannot be identified only by the postal code**
 
 #### **City**
 
@@ -131,6 +131,10 @@ Nullable `cityId` :
 - Because HeadOffice customers don't have city, only postal code !?
 - Which means there are some cities that are not associated with a postal code :/ !?
 
+#### **`Postal Code` Table**
+
+Postal code is in a dedicated table because there are multiple cities with the same postal code
+
 ## Questions
 
 1. Column `City Key`, table `Sale`:
@@ -159,6 +163,6 @@ Nullable `cityId` :
 
 - [x] ER
 - [x] DDL (data definition language) files (create + drop)
-- [ ] Filegroups
+- [x] Filegroups
 - [ ] Migration
 - [ ] Migration check

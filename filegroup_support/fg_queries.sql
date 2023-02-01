@@ -34,10 +34,8 @@ GO
 
 -- City Name
 select count(City), count(distinct City) as 'Different Cities' from City;
-select AVG(LEN(City)) as 'Avg Len' from (select distinct City from City) c; --'
+select AVG(LEN(City)) as 'Avg Len' from (select distinct City from City) c;
 GO
-
--- ISSUE: City table entries count error in xlsx and filegroup
 
 -- (City, State Province) different entries
 select city, [State Province], Count(*) from City group by City, [State Province] order by city;
@@ -80,7 +78,6 @@ select count([Buying Group]), count(distinct [Buying Group]) from Customer;
 select avg(len([Buying Group])) from (select distinct [Buying Group] from Customer) c;
 GO
 
---TODO: Add `COLLATE Latin1_General_CS_AS` - case sensitive to /notbook/sql/syntax
 -- Colors
 select [Stock Item] from [Stock Item];
 select [Stock Item] from [Stock Item] si where si.[Stock Item] COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%' ;
@@ -93,11 +90,28 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 	COLLATE Latin1_General_CS_AS
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
 ) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
--- The last where is essential bc of this pattern (something)(Color) -> something
+-- The last 'where' is essential bc of this pattern xxxx(something)(Color) -> something
 
--- Product
--- Product Model
-select [Stock Item] from [Stock Item];
+-- Product, Product Model
+select * from [Stock Item] 
+-- TODO: Get the number of different products and product models
+-- Tip: Product pattern %[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% - model% number||(Color) size
+
+-----------------------------------------------------------
+
+-- Size
+select distinct Size from [Stock Item]
+GO
+
+-- Brand
+select Avg(len(Brand)) from (select distinct Brand from [Stock Item]) x;
+GO
+
+-- Package
+-- Bag, Each, Packet, Pair, Carton = 5
+select distinct [Selling Package] from [Stock Item];
+select distinct [Buying Package] from [Stock Item];
+GO
 
 -- Color_Product
 select color, [Stock Item] from [Stock Item] where color != 'N/A' and color is not null and  [Stock Item]
@@ -114,11 +128,13 @@ GO
 -- SalesOrderHeader, Bills
 select * from Sale order by [WWI Invoice ID];
 select count(distinct s.[WWI Invoice ID]) from Sale s;
-
+GO
 -- SalesOrderDetail
 select count(*) from Sale;
+GO
 
 -- Customer
 select * from Customer;
-select [WWI Customer ID], Customer from Customer;
 select count(distinct [WWI Customer ID]), count(distinct Customer) from Customer;
+select AVG(LEN([Primary Contact])) from Customer;
+GO
