@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS Customers.Customer (
   AddressId      int NOT NULL,
   PRIMARY KEY (CustomerId));
 CREATE TABLE IF NOT EXISTS Token (
-  Token        varchar(255) NOT NULL,
+  Token        uniqueidentifier NOT NULL  
+   DEFAULT newid(),
   SentDate     datetime NOT NULL,
   SystemUserId int NOT NULL,
   PRIMARY KEY (Token));
