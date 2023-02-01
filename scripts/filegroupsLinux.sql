@@ -9,6 +9,7 @@ GO
 -- For Performance
 --      Pain in the *** for online restore but we won't do it anyway :)
 
+-- ISSUE: some filegroups size are not up to date
 create database WWIGlobal
 on primary (
     name = 'wwi_primary',

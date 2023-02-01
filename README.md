@@ -8,12 +8,14 @@ ER draft and decision making description.
 
 ### Old Tables Management
 
+TODO: Update handling columns
+
 #### **Employee**
 
 | Status | Column         | Content | Handling                |
 | :----: | -------------- | ------- | ----------------------- |
 |   x    | Employee Key   |         | -                       |
-|   x    | Employee       |         | Renamed `Name`          |
+|   x    | Employee       |         | Now `First Name` & `Last Name` |
 |   x    | Preferred Name |         | -                       |
 |   x    | Is Salesperson |         | New table `SalesPerson` |
 |   x    | Photo          |         | -                       |
@@ -27,20 +29,24 @@ ER draft and decision making description.
 |   x    | Customer Key        |                            | FK from `Customer`                                  |
 |   x    | Stock Item key      |                            | Into `SalesOrderDetails` Key (ManyToMany rel)       |
 |   x    | Invoice Date Key    |                            | Into `SalesOrderHeader` as DueDate                  |
-|   x    | Delivery Date Key   |                            | Into `SalesOrderHeader` as DeliverDate/ShipDate     |
+|   x    | Delivery Date Key   |                            | Into `SalesOrderHeader` as DeliverDate/ShipDate - Transport\*\*\* |
 |   x    | Salesperson Key     |                            | FK from `Employee`                                  |
-|   x    | WWI Invoice ID      |                            | Into `SalesOrderHeader` as Key                      |
-|   x    | Description         |                            | Skipped (Same as `Stock Item` of `Stock Item`)      |
+|   x    | WWI Invoice ID      |                            | -                                                   |
+|   x    | Description         |                            | Skipped (Same as `Stock Item`)                      |
 |   x    | Package             |                            | Skipped (same as `Selling Package` of `Stock Item`) |
 |   x    | Quantity            |                            | Into `SalesOrderDetails`                            |
 |   x    | Unit Price          |                            | Skipped (Same as `Unit Price` of `Stock Item`)      |
-|   x    | Tax Rate            |                            | -                                                   |
-|   x    | Total Excluding Tax |                            | -                                                   |
-|   x    | Tax Amount          |                            | -                                                   |
-|   x    | Profit              |                            | Into `CompanyBills`                                 |
-|   x    | Total Including Tax |                            | Renamed (`LineTotal`)                               |
-|   x    | Total Dry Items     |                            |                                                     |
-|   x    | Total Chiller Items |                            |                                                     |
+|   x    | Tax Rate            |                            | Into `SalesOrderDetails`                            |
+|   x    | Total Excluding Tax |                            |  Into `SalesOrderDetails`                           |
+|   x    | Tax Amount          |                            | Into `SalesOrderDetails`                            |
+|   x    | Profit              |                            | Into `Bills`                                        |
+|   x    | Total Including Tax |                            | -                                                   |
+|   x    | Total Dry Items     |                            | `IsChiller`\*\*                                     |
+|   x    | Total Chiller Items |                            | `IsChiller`\*\*                                     |
+
+\*\* the total is the total of products on the sale.
+
+\*\*\* `Transport` (`delivery dates`) and `SalesOrderHeader` (`delivery dates`) are not the same - the data will be "duplicated".
 
 #### **Stock Item**
 
@@ -49,12 +55,12 @@ ER draft and decision making description.
 |   x    | Stock Item Key           | -                                  |                               |
 |        | Stock Item               | name (color) size/weight           | split format???               |
 |   x    | Color                    |                                    | Into `Color` (ManyToMany rel) |
-|   x    | Selling Package          |                                    | -                             |
-|   x    | Buying Package           |                                    | -                             |
-|   x    | Brand                    |                                    | -                             |
-|   x    | Size                     |                                    | -                             |
+|   x    | Selling Package          |                                    | `Packages` Table              |
+|   x    | Buying Package           |                                    | `Packages` Table              |
+|   x    | Brand                    |                                    | `Brand` Table                 |
+|   x    | Size                     |                                    | `Size` Table                  |
 |   x    | Lead Time Days           |                                    | -                             |
-|   x    | Quantity Per Outer       |                                    | Renamed ( PackageQuantity)    |
+|   x    | Quantity Per Outer       |                                    | Renamed (PackageQuantity)     |
 |   x    | Is Chiller Stock         |                                    | -                             |
 |   x    | Barcode                  |                                    | -                             |
 |   x    | Tax Rate                 | Different from `Sale`'s `Tax Rate` | atm the same/ **with doubts** |
@@ -69,11 +75,11 @@ ER draft and decision making description.
 |   x    | Customer Key     | -                                         | -                                                                       |
 |   x    | WWI Customer ID  | -                                         | Deleted                                                                 |
 |   x    | Customer         | BuyingGroup (Head Office/City, StateCode) | Split into Customer and `CustomerCity`                                  |
-|   x    | Bill To Customer |                                           | Into `sale`, self reference/relationship, or skipped ? - Into `Sales`\* |
-|   x    | Category         |                                           | New Table `Categories`                                                  |
-|   x    | Buying Group     |                                           | New Table `Buying Groups`                                               |
-|   x    | Primary Contact  |                                           | -                                                                       |
-|   x    | Postal Code      | \*\*                                      | -                                                                       |
+|   x    | Bill To Customer |                                           | \*Into `sale`, self reference/relationship, or skipped ? - Into `Sales`\* |
+|   x    | Category         |                                           | New Table `BusinessCategory`                                            |
+|   x    | Buying Group     |                                           | New Table `BuyingGroup`                                                 |
+|   x    | Primary Contact  |                                           | `Contact` Table                                                         |
+|   x    | Postal Code      | \*\*                                      | `Postal Code` Table                                                     |
 
 **Notes** :
 
@@ -159,10 +165,13 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## Known Issues
 
+ISSUE: ER != create/drop script
+ISSUE: Filegroups with bad dimensioning
+
 ## TODO
 
 - [x] ER
 - [x] DDL (data definition language) files (create + drop)
-- [x] Filegroups
+- [ ] Filegroups
 - [ ] Migration
 - [ ] Migration check
