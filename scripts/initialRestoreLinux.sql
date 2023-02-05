@@ -8,8 +8,6 @@ MOVE 'WWI_DS_Log' TO '/var/opt/mssql/data/WWI_OldData_log.ldf'
 GO
 
 -- Rename database (bc I screw up)
---USE master;
---GO
 --ALTER DATABASE WWI_DS SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 --GO
 --ALTER DATABASE WWI_DS MODIFY NAME = wwiOld;

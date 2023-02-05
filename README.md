@@ -12,37 +12,37 @@ TODO: Update handling columns
 
 #### **Employee**
 
-| Status | Column         | Content | Handling                |
-| :----: | -------------- | ------- | ----------------------- |
-|   x    | Employee Key   |         | -                       |
+| Status | Column         | Content | Handling                       |
+| :----: | -------------- | ------- | ------------------------------ |
+|   x    | Employee Key   |         | -                              |
 |   x    | Employee       |         | Now `First Name` & `Last Name` |
-|   x    | Preferred Name |         | -                       |
-|   x    | Is Salesperson |         | New table `SalesPerson` |
-|   x    | Photo          |         | -                       |
+|   x    | Preferred Name |         | -                              |
+|   x    | Is Salesperson |         | New table `SalesPerson`        |
+|   x    | Photo          |         | -                              |
 
 #### **Sale**
 
-| Status | Column              | Content                    | Handling                                            |
-| :----: | ------------------- | -------------------------- | --------------------------------------------------- |
-|   x    | Sale Key            |                            | -                                                   |
-|   x    | City Key            | Sale City != Customer City | FK from `City`                                      |
-|   x    | Customer Key        |                            | FK from `Customer`                                  |
-|   x    | Stock Item key      |                            | Into `SalesOrderDetails` Key (ManyToMany rel)       |
-|   x    | Invoice Date Key    |                            | Into `SalesOrderHeader` as DueDate                  |
+| Status | Column              | Content                    | Handling                                                          |
+| :----: | ------------------- | -------------------------- | ----------------------------------------------------------------- |
+|   x    | Sale Key            |                            | -                                                                 |
+|   x    | City Key            | Sale City != Customer City | FK from `City`                                                    |
+|   x    | Customer Key        |                            | FK from `Customer`                                                |
+|   x    | Stock Item key      |                            | Into `SalesOrderDetails` Key (ManyToMany rel)                     |
+|   x    | Invoice Date Key    |                            | Into `SalesOrderHeader` as DueDate                                |
 |   x    | Delivery Date Key   |                            | Into `SalesOrderHeader` as DeliverDate/ShipDate - Transport\*\*\* |
-|   x    | Salesperson Key     |                            | FK from `Employee`                                  |
-|   x    | WWI Invoice ID      |                            | -                                                   |
-|   x    | Description         |                            | Skipped (Same as `Stock Item`)                      |
-|   x    | Package             |                            | Skipped (same as `Selling Package` of `Stock Item`) |
-|   x    | Quantity            |                            | Into `SalesOrderDetails`                            |
-|   x    | Unit Price          |                            | Skipped (Same as `Unit Price` of `Stock Item`)      |
-|   x    | Tax Rate            |                            | Into `SalesOrderDetails`                            |
-|   x    | Total Excluding Tax |                            |  Into `SalesOrderDetails`                           |
-|   x    | Tax Amount          |                            | Into `SalesOrderDetails`                            |
-|   x    | Profit              |                            | Into `Bills`                                        |
-|   x    | Total Including Tax |                            | -                                                   |
-|   x    | Total Dry Items     |                            | `IsChiller`\*\*                                     |
-|   x    | Total Chiller Items |                            | `IsChiller`\*\*                                     |
+|   x    | Salesperson Key     |                            | FK from `Employee`                                                |
+|   x    | WWI Invoice ID      |                            | -                                                                 |
+|   x    | Description         |                            | Skipped (Same as `Stock Item`)                                    |
+|   x    | Package             |                            | Skipped (same as `Selling Package` of `Stock Item`)               |
+|   x    | Quantity            |                            | Into `SalesOrderDetails`                                          |
+|   x    | Unit Price          |                            | Skipped (Same as `Unit Price` of `Stock Item`)                    |
+|   x    | Tax Rate            |                            | Into `SalesOrderDetails`                                          |
+|   x    | Total Excluding Tax |                            | Into `SalesOrderDetails`                                          |
+|   x    | Tax Amount          |                            | Into `SalesOrderDetails`                                          |
+|   x    | Profit              |                            | Into `Bills`                                                      |
+|   x    | Total Including Tax |                            | -                                                                 |
+|   x    | Total Dry Items     |                            | `IsChiller`\*\*                                                   |
+|   x    | Total Chiller Items |                            | `IsChiller`\*\*                                                   |
 
 \*\* the total is the total of products on the sale.
 
@@ -70,16 +70,16 @@ TODO: Update handling columns
 
 #### **Customer**
 
-| Status | Column           | Content                                   | Handling                                                                |
-| :----: | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-|   x    | Customer Key     | -                                         | -                                                                       |
-|   x    | WWI Customer ID  | -                                         | Deleted                                                                 |
-|   x    | Customer         | BuyingGroup (Head Office/City, StateCode) | Split into Customer and `CustomerCity`                                  |
+| Status | Column           | Content                                   | Handling                                                                  |
+| :----: | ---------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
+|   x    | Customer Key     | -                                         | -                                                                         |
+|   x    | WWI Customer ID  | -                                         | Deleted                                                                   |
+|   x    | Customer         | BuyingGroup (Head Office/City, StateCode) | Split into Customer and `CustomerCity`                                    |
 |   x    | Bill To Customer |                                           | \*Into `sale`, self reference/relationship, or skipped ? - Into `Sales`\* |
-|   x    | Category         |                                           | New Table `BusinessCategory`                                            |
-|   x    | Buying Group     |                                           | New Table `BuyingGroup`                                                 |
-|   x    | Primary Contact  |                                           | `Contact` Table                                                         |
-|   x    | Postal Code      | \*\*                                      | `Postal Code` Table                                                     |
+|   x    | Category         |                                           | New Table `BusinessCategory`                                              |
+|   x    | Buying Group     |                                           | New Table `BuyingGroup`                                                   |
+|   x    | Primary Contact  |                                           | `Contact` Table                                                           |
+|   x    | Postal Code      | \*\*                                      | `Postal Code` Table                                                       |
 
 **Notes** :
 
@@ -155,17 +155,8 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
    - Shouldn't it be somehow associate with `Sales`?
 
-4. Column `Delivery Date`, tables `Transport` and `SalesOrderHeader`:
-
-   - Why are those dates so different? Aren't they related?
-
-5. Column `Postal Code`, table `Customer` :
-
-   - The `Postal Code` is identified by its own _code_ and the _city_ which it belongs to, since it's used the same postal code for different cities. However, there are 2 postal codes without cities!! How can you identify them?
-
 ## Known Issues
 
-ISSUE: ER != create/drop script
 ISSUE: Filegroups with bad dimensioning
 
 ## TODO
