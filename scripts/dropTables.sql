@@ -75,3 +75,17 @@ DROP TABLE Package;
 DROP TABLE Customers.Contacts;
 DROP TABLE TaxRate;
 GO
+DROP SCHEMA Customers
+GO
+DROP SCHEMA Sales
+GO
+DROP SCHEMA CompanyResources
+GO
+DROP SCHEMA Stock
+GO
+DROP SCHEMA Location
+GO
+DROP SCHEMA Shipments
+GO
+DROP SCHEMA Authentication
+GO

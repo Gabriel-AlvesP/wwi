@@ -23,7 +23,8 @@ CREATE TABLE Customers.Customer (
     AddressId     int NOT NULL,
 );
 CREATE TABLE Authentication.Token (
-    Token        uniqueidentifier NOT NULL PRIMARY KEY DEFAULT newid(),
+    Token        uniqueidentifier NOT NULL PRIMARY KEY 
+    DEFAULT newid(),
     SentDate     datetime NOT NULL,
     SystemUserId int NOT NULL,
 );
@@ -33,13 +34,13 @@ CREATE TABLE Sales.Discount (
     EndDate      date NOT NULL,
     DiscountRate numeric(5, 2) NOT NULL,
 );
-CREATE TABLE ErrorLogs (
+CREATE TABLE dbo.ErrorLogs (
     ErrorLogId int IDENTITY NOT NULL PRIMARY KEY,
     ErrorId    smallint NOT NULL,
     UserName   varchar(255) NOT NULL,
     [Date]     datetime NOT NULL,
 );
-CREATE TABLE Error (
+CREATE TABLE dbo.Error (
     ErrorId      smallint IDENTITY NOT NULL PRIMARY KEY,
     ErrorMessage varchar(255) NOT NULL,
 );
@@ -55,7 +56,7 @@ CREATE TABLE Stock.ProductModel (
     ProductId              int NOT NULL,
     ProductModel           varchar(255) NULL,
     BrandId                int NOT NULL,
-    SIzeId                 int NOT NULL,
+    SizeId                 int NOT NULL,
     Barcode                int NOT NULL,
     StandardUnitCost       money NOT NULL,
     RecommendedRetailPrice money NOT NULL,
@@ -121,7 +122,7 @@ CREATE TABLE Customers.BuyingGroup (
     BuyingGroupId int IDENTITY NOT NULL PRIMARY KEY,
     Name          varchar(255) NOT NULL UNIQUE,
 );
-CREATE TABLE SystemControl (
+CREATE TABLE dbo.SystemControl (
     SchemaName varchar(255) NOT NULL,
     TableName  varchar(255) NOT NULL,
     ColumnName varchar(255) NOT NULL,
@@ -131,7 +132,7 @@ CREATE TABLE SystemControl (
     IsUnique   bit NOT NULL,
     UpdateDate datetime NOT NULL
 );
-CREATE TABLE Estimation (
+CREATE TABLE dbo.Estimation (
     TableName        varchar(255) NOT NULL,
     EntriesNumber    bigint NOT NULL,
     EstimatedStorage bigint NOT NULL,
@@ -196,7 +197,7 @@ CREATE TABLE Stock.Product (
     ProductId int IDENTITY NOT NULL,
     Name      varchar(255) NOT NULL UNIQUE,
     PRIMARY KEY (ProductId));
-CREATE TABLE Stock.[SIze] (
+CREATE TABLE Stock.[Size] (
     SizeId int IDENTITY NOT NULL,
     Value  varchar(25) NOT NULL UNIQUE,
     PRIMARY KEY (SizeId));
@@ -216,7 +217,7 @@ CREATE TABLE TaxRate (
     Value numeric(6, 3) NOT NULL,
     PRIMARY KEY (Value));
 GO
-ALTER TABLE ErrorLogs ADD CONSTRAINT FKErrorLogs128846 FOREIGN KEY (ErrorId) REFERENCES Error (ErrorId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE dbo.ErrorLogs ADD CONSTRAINT FKErrorLogs128846 FOREIGN KEY (ErrorId) REFERENCES dbo.Error (ErrorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder501237 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod455898 FOREIGN KEY (ColorId) REFERENCES Stock.Color (ColorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod770171 FOREIGN KEY (ProductModelId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -245,7 +246,7 @@ ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi145043 FOREIGN KEY 
 ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi235227 FOREIGN KEY (CountryId) REFERENCES Location.Country (CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Location.City ADD CONSTRAINT FKCity262519 FOREIGN KEY (StateProvinceCode, CountryId) REFERENCES StateProvince_Country (StateProvinceCode, CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod591355 FOREIGN KEY (ProductId) REFERENCES Stock.Product (ProductId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod979572 FOREIGN KEY (SIzeId) REFERENCES Stock.[SIze] (SizeId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod979572 FOREIGN KEY (SizeId) REFERENCES Stock.[Size] (SizeId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod345309 FOREIGN KEY (BrandId) REFERENCES Stock.Brand (BrandId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod245369 FOREIGN KEY (BuyingPackageId) REFERENCES Package (PackageId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod130361 FOREIGN KEY (SellingPackageId) REFERENCES Package (PackageId) ON DELETE CASCADE ON UPDATE CASCADE;

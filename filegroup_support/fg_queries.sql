@@ -92,65 +92,71 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 ) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
 -- The last 'where' is essential bc of this pattern xxxx(something)(Color) -> something
 
+------------------------------------------------------------------------------------------------------
+
 -- Product, Product Model
 -- Tip: Product pattern %[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% - model% number||(Color) size
-select distinct [Stock Item] from [Stock Item]; 
+select distinct [Stock Item], si.Size, si.[Typical Weight Per Unit] from [Stock Item] si order by [Stock Item]; 
 GO
 
 -- Different Products without models
-select distinct y from (select case when sol like '%[0-9][gm]'
+--select avg(len(NoModelProducts)) from ( -- Avg
+select distinct NoModelProducts from (select case when sol like '%[0-9][gm]' or sol like '%[1-9]mm'
 then
--- TODO: remove the size at the end of these products
-	sol
+	-- Remove size from products
+	 SUBSTRING(sol, 1,  len(sol) - charindex(' ', reverse(sol)))
 else 
+	-- Products without the size on the name 
 	sol
-end as y
+end as NoModelProducts
 from (
 	select case when si COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
 	then
-	 substring(si, 1, charindex('(', si)-2)
+		-- Remove color from the product name
+		substring(si, 1, charindex('(', si)-2)
 	else
+		-- Products without color on the name
 		si
 	end as sol
 	from (
+		-- Remove Products with models
 		select distinct [Stock Item] as 'si' from [Stock Item] 
 		where [Stock Item]
 		COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 	) si
-) x) y;
+) x) y
+--)z; -- Avg
 GO
 
 -- Products w/ models (4)
-select distinct substring([Stock Item], 1, charindex('-', [Stock Item])-1) from [Stock Item] where [Stock Item]
+--select avg(len(sol)) from ( -- Avg
+select distinct substring([Stock Item], 1, charindex('-', [Stock Item])-1) as sol from [Stock Item] where [Stock Item]
 COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
+--) x -- Avg
 GO
 
 -- Number of models (33)
-select distinct sol from (select case when x.sq like '(%'
-then
-	 substring(x.sq, 1, charindex(')', x.sq))
-else case when x.sq like '%(%'
-	then 
-		SUBSTRING(x.sq, 1, charindex('(', x.sq)-1)
-	else
-		x.sq
-	end
-end as sol
-from (select distinct substring([Stock Item], charindex('-', [Stock Item])+2, len([Stock Item])) as 'sq'
+--select avg(len(productModel)) from ( -- Avg
+	select distinct productModel from (select case when x.sq like '(%'
+	then
+		substring(x.sq, 1, charindex(')', x.sq))
+	else 
+		case when x.sq like '%(%'
+		then 
+			SUBSTRING(x.sq, 1, charindex('(', x.sq)-1)
+		else
+			x.sq
+		end
+	end as productModel
+	from (
+		select 
+			distinct substring([Stock Item],
+			charindex('-', [Stock Item])+2, len([Stock Item])) as 'sq'
 		from [Stock Item]
-		where [Stock Item] COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%') x) y;
+		where [Stock Item] COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%') x) y
+--) z; -- Avg
 GO
 
--- Different Products
-select case when [Stock Item] COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
-then 
-	'N/A'
-else 
-	substring([Stock Item], 1, len([Stock Item]))
-end, [Stock Item]
-from 
-[Stock Item];
-GO
 -----------------------------------------------------------
 
 -- Size
@@ -186,6 +192,8 @@ GO
 -- SalesOrderDetail
 select count(*) from Sale;
 GO
+
+select distinct [Tax Rate] from Sale;
 
 -- Customer
 select * from Customer;
