@@ -51,8 +51,8 @@ filegroup WWIGlobal_fg3 (
 log on (
     name = 'wwiglobal_log',
     filename = '/var/opt/mssql/data/wwiglobal_log.ldf',
-    SIZE = 10MB,
-    MAXSIZE = 50MB,
+    SIZE = 20MB,
+    MAXSIZE = 60MB,
     FILEGROWTH = 20MB
 )
 GO
