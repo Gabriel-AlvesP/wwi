@@ -12,8 +12,8 @@ on primary (
 
 -- Features: +/-Access, +/-Read, -Write
 -- Tables: Continent, Country, StateProvince, SalesTerritory, State_Country, CityName, City, Token, Error, Logistic, TaxRate, Currency, Color, Package, BusinessCategory
-filegroup WWIGlobal (
-    name = 'wwi_fg1_1',
+filegroup WWIGlobal_fg1 (
+    name = 'wwi_fg1',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg1.ndf',
     size = 10MB,
     maxsize = 30MB,
@@ -21,9 +21,9 @@ filegroup WWIGlobal (
 ),
 
 -- Features: +Write, +Access
--- Tables: SalesOrderHeader, Employee, ErrorLogs, ColumnInfo, Estimation, SystemUser, Discount, ProductModel, Size, Contact, BuyingGroup
-filegroup WWIGlobal (
-    name = 'wwi_fg2_1',
+-- Tables: SalesOrderHeader, Employee, ErrorLogs, ColumnInfo, Estimation, SystemUser, Discount, ProductModel, Size, Contact, BuyingGroup, Transport
+filegroup WWIGlobal_fg2 (
+    name = 'wwi_fg2',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg1.ndf'
     size = 10MB,
     maxsize = 50MB,
@@ -31,16 +31,16 @@ filegroup WWIGlobal (
 ),
 
 -- Features: +Read, +Write
--- Tables: SalesOrderDetails, CurrencyRate, Salesman, PostalCode, Transport, Address, Customer, Color_Product, Product, Brand
-filegroup WWIGlobal (
-    name = 'wwi_fg3_1',
+-- Tables: SalesOrderDetails, CurrencyRate, Salesman, PostalCode, Address, Customer, Color_Product, Product, Brand
+filegroup WWIGlobal_fg3 (
+    name = 'wwi_fg3_dat1',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg1.ndf'
     size = 20MB,
     maxsize 60MB,
     filegrowth = 20MB
 ),
 (
-    name = 'wwi_fg3_2',
+    name = 'wwi_fg3_dat2',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg1.ndf'
     size = 30MB,
     maxsize = 80MB,
@@ -58,5 +58,5 @@ log on (
 GO
 
 ALTER DATABASE WWIGlobal
-MODIFY FILEGROUP wwi_fg1_1  DEFAULT;
+MODIFY FILEGROUP WWIGlobal_fg2 DEFAULT;
 GO
