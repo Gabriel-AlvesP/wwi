@@ -76,7 +76,7 @@ CREATE TABLE Location.StateProvince (
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.CityName (
     CityNameId int IDENTITY NOT NULL PRIMARY KEY,
-    Name       varchar(255) NOT NULL UNIQUE,
+    Name       varchar(100) NOT NULL UNIQUE,
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.Country (
     CountryId   tinyint IDENTITY NOT NULL PRIMARY KEY,
@@ -85,7 +85,7 @@ CREATE TABLE Location.Country (
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.SalesTerritory (
     SalesTerritoryId int IDENTITY NOT NULL PRIMARY KEY,
-    Territory        varchar(255) NOT NULL UNIQUE,
+    Territory        varchar(100) NOT NULL UNIQUE,
 ) ON WWIGlobal_fg1;
 CREATE TABLE Sales.SalesOrderHeader (
     SaleId         int IDENTITY NOT NULL PRIMARY KEY,
@@ -192,7 +192,7 @@ CREATE TABLE Location.PostalCode (
     Code int IDENTITY NOT NULL,
     PRIMARY KEY (Code)
 ) ON WWIGlobal_fg3;
-CREATE TABLE StateProvince_Country (
+CREATE TABLE Location.StateProvince_Country (
     StateProvinceCode char(2) NOT NULL,
     CountryId         tinyint NOT NULL,
     PRIMARY KEY (StateProvinceCode,
@@ -213,7 +213,7 @@ CREATE TABLE Stock.Brand (
     Name    varchar(60) NOT NULL UNIQUE,
     PRIMARY KEY (BrandId)
 ) ON WWIGlobal_fg3;
-CREATE TABLE Package (
+CREATE TABLE Stock.Package (
     PackageId smallint IDENTITY NOT NULL,
     Name      varchar(25) NOT NULL UNIQUE,
     PRIMARY KEY (PackageId)
@@ -223,7 +223,7 @@ CREATE TABLE Customers.Contacts (
     IsPrimary  bit NOT NULL,
     CustomerId int NOT NULL
 );
-CREATE TABLE TaxRate (
+CREATE TABLE Sales.TaxRate (
     Value numeric(6, 3) NOT NULL,
     PRIMARY KEY (Value)
 ) ON WWIGlobal_fg1;
@@ -252,15 +252,15 @@ ALTER TABLE Location.Address ADD CONSTRAINT FKAddress489264 FOREIGN KEY (CityId)
 ALTER TABLE Location.Address ADD CONSTRAINT FKAddress632364 FOREIGN KEY (PostalCode) REFERENCES Location.PostalCode (Code) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer133437 FOREIGN KEY (AddressId) REFERENCES Location.Address (AddressId) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE Sales.Salesperson ADD CONSTRAINT FKSalesperso253703 FOREIGN KEY (SalespersonId) REFERENCES CompanyResources.Employee (EmployeeId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi145043 FOREIGN KEY (StateProvinceCode) REFERENCES Location.StateProvince (Code) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE StateProvince_Country ADD CONSTRAINT FKStateProvi235227 FOREIGN KEY (CountryId) REFERENCES Location.Country (CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Location.City ADD CONSTRAINT FKCity262519 FOREIGN KEY (StateProvinceCode, CountryId) REFERENCES StateProvince_Country (StateProvinceCode, CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Location.StateProvince_Country ADD CONSTRAINT FKStateProvi145043 FOREIGN KEY (StateProvinceCode) REFERENCES Location.StateProvince (Code) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Location.StateProvince_Country ADD CONSTRAINT FKStateProvi235227 FOREIGN KEY (CountryId) REFERENCES Location.Country (CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Location.City ADD CONSTRAINT FKCity262519 FOREIGN KEY (StateProvinceCode, CountryId) REFERENCES Location.StateProvince_Country (StateProvinceCode, CountryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod591355 FOREIGN KEY (ProductId) REFERENCES Stock.Product (ProductId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod979572 FOREIGN KEY (SizeId) REFERENCES Stock.[Size] (SizeId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod345309 FOREIGN KEY (BrandId) REFERENCES Stock.Brand (BrandId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod245369 FOREIGN KEY (BuyingPackageId) REFERENCES Package (PackageId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod130361 FOREIGN KEY (SellingPackageId) REFERENCES Package (PackageId) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod245369 FOREIGN KEY (BuyingPackageId) REFERENCES Stock.Package (PackageId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod130361 FOREIGN KEY (SellingPackageId) REFERENCES Stock.Package (PackageId) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder216469 FOREIGN KEY (SalespersonId) REFERENCES Sales.Salesperson (SalespersonId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Contacts ADD CONSTRAINT FKContacts573379 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder809659 FOREIGN KEY (TaxRateValue) REFERENCES TaxRate (Value) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder809659 FOREIGN KEY (TaxRateValue) REFERENCES Sales.TaxRate (Value) ON DELETE CASCADE ON UPDATE CASCADE;
 GO

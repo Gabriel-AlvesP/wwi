@@ -25,8 +25,8 @@ ALTER TABLE Location.Address DROP CONSTRAINT FKAddress489264;
 ALTER TABLE Location.Address DROP CONSTRAINT FKAddress632364;
 ALTER TABLE Customers.Customer DROP CONSTRAINT FKCustomer133437;
 ALTER TABLE Sales.Salesperson DROP CONSTRAINT FKSalesperso253703;
-ALTER TABLE StateProvince_Country DROP CONSTRAINT FKStateProvi145043;
-ALTER TABLE StateProvince_Country DROP CONSTRAINT FKStateProvi235227;
+ALTER TABLE Location.StateProvince_Country DROP CONSTRAINT FKStateProvi145043;
+ALTER TABLE Location.StateProvince_Country DROP CONSTRAINT FKStateProvi235227;
 ALTER TABLE Location.City DROP CONSTRAINT FKCity262519;
 ALTER TABLE Stock.ProductModel DROP CONSTRAINT FKProductMod591355;
 ALTER TABLE Stock.ProductModel DROP CONSTRAINT FKProductMod979572;
@@ -65,13 +65,13 @@ DROP TABLE Shipments.Transport;
 DROP TABLE Location.Continent;
 DROP TABLE Location.City;
 DROP TABLE Location.PostalCode;
-DROP TABLE StateProvince_Country;
+DROP TABLE Location.StateProvince_Country;
 DROP TABLE Stock.Product;
 DROP TABLE Stock.[Size];
 DROP TABLE Stock.Brand;
-DROP TABLE Package;
+DROP TABLE Stock.Package;
 DROP TABLE Customers.Contacts;
-DROP TABLE TaxRate;
+DROP TABLE Sales.TaxRate;
 GO
 DROP SCHEMA Customers
 GO
