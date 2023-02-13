@@ -157,12 +157,10 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## Known Issues
 
-ISSUE: Filegroups with bad dimensioning
-
 ## TODO
 
 - [x] ER
 - [x] DDL (data definition language) files (create + drop)
-- [ ] Filegroups
+- [x] Filegroups
 - [ ] Migration
 - [ ] Migration check

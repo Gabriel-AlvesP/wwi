@@ -38,6 +38,71 @@ select AVG(LEN(City)) as 'Avg Len' from (select distinct City from City) c;
 GO
 
 -- (City, State Province) different entries
+-- Features: +Read, +/-Write
+-- Tables: City, BusinessCategory, Logistic, Currency, PostalCode, Color, Error, Discount, Token
+-- Tables Initial Avg storage: 569100 + 70 + 18 + 16 + 1268 + 99 = 570570 B (570,57 KB) + Error + Discount + Token
+filegroup WWIGlobal (
+    name = 'wwi_fg2_1',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg2.ndf',
+    size = 30MB,
+    maxsize = 70MB,
+    filegrowth = 20MB
+),
+
+-- Features: +Rserviceead, +Write
+-- Tables: SalesOrderHeader, BuyingGroup, Address, Product, Color_Product
+-- Tables Initial Avg storage: 1833260 + 36 + 14 + 2540 = 1835850 + Product = 1 835 850 B = 1835,85KB
+filegroup WWIGlobal (
+    name = 'wwi_fg3_1',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg3_1.ndf',
+    size = 50MB,
+    maxsize = 150MB,
+    filegrowth = 50MB
+),
+(
+    name = 'wwi_fg3_2',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg3_2.ndf',
+    size = 100MB,
+    maxsize = 200MB,
+    filegrowth = 50MB
+),
+
+-- Features: +Read, +Write
+-- Tables: SalesOrderDetails, Size, Employee, Bills, SystemUser, CurrencyRate
+-- Tables Initial Avg storage: + 418 + 846120 + 17286 + 38 = SalesOrderDetails + 863862
+filegroup WWIGlobal (
+    name = 'wwi_fg4_1',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg4_1.ndf',
+    size = 100MB,
+    maxsize = 300MB,
+    filegrowth = 100MB
+),
+(
+    name = 'wwi_fg4_2',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg4_2.ndf',
+    size = 200MB,
+    maxsize = 400MB,
+    filegrowth = 100MB
+),
+
+-- Features: +Read, +Write
+-- Tables: ProductModel, Transport, Salesperson, Customer, ErrorLogs, Monitoring, Estimation
+-- Tables Initial Avg storage: + 1102 + 140 + 7638  = 8880 + ProductModel + ErrorLogs + Monitoring + Estimation
+filegroup WWIGlobal (
+    name = 'wwi_fg5_1',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg5_1.ndf',
+    size = 100MB,
+    maxsize = 200MB,
+    filegrowth = 100MB
+),
+(
+    name = 'wwi_fg5_2',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwi_fg5_2.ndf',
+    size = 100MB,
+    maxsize = 200MB,
+    filegrowth = 100MB
+)
+
 select city, [State Province], Count(*) from City group by City, [State Province] order by city;
 GO
 select count(city) from (select city from City group by City, [State Province]) x;
@@ -96,7 +161,7 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 
 -- Product, Product Model
 -- Tip: Product pattern %[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% - model% number||(Color) size
-select distinct [Stock Item], si.Size, si.[Typical Weight Per Unit] from [Stock Item] si order by [Stock Item]; 
+select distinct [Stock Item], si.Size, si.[Typical Weight Per Unit] from [Stock Item] si order by [Stock Item];
 GO
 
 -- Different Products without models
@@ -105,8 +170,8 @@ select distinct NoModelProducts from (select case when sol like '%[0-9][gm]' or 
 then
 	-- Remove size from products
 	 SUBSTRING(sol, 1,  len(sol) - charindex(' ', reverse(sol)))
-else 
-	-- Products without the size on the name 
+else
+	-- Products without the size on the name
 	sol
 end as NoModelProducts
 from (
@@ -120,7 +185,7 @@ from (
 	end as sol
 	from (
 		-- Remove Products with models
-		select distinct [Stock Item] as 'si' from [Stock Item] 
+		select distinct [Stock Item] as 'si' from [Stock Item]
 		where [Stock Item]
 		COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 	) si
@@ -140,16 +205,16 @@ GO
 	select distinct productModel from (select case when x.sq like '(%'
 	then
 		substring(x.sq, 1, charindex(')', x.sq))
-	else 
+	else
 		case when x.sq like '%(%'
-		then 
+		then
 			SUBSTRING(x.sq, 1, charindex('(', x.sq)-1)
 		else
 			x.sq
 		end
 	end as productModel
 	from (
-		select 
+		select
 			distinct substring([Stock Item],
 			charindex('-', [Stock Item])+2, len([Stock Item])) as 'sq'
 		from [Stock Item]
