@@ -171,11 +171,155 @@ BEGIN
 END
 GO
 
---TODO: City, 
---TODO: PostalCode
---TODO: Address
---TODO: BuyingGorup
---TODO: BusinessCategory
+CREATE OR ALTER PROCEDURE sp_import_cities
+AS
+BEGIN
+    DECLARE city_cur CURSOR FOR SELECT city, [Latest Recorded Population], [State Province], Country FROM WWI_OldData.dbo.City group by City, [State Province], country, [Latest Recorded Population]
+
+    DECLARE @city varchar(100), @cityNameId int,
+    @population int,
+    @stateProv varchar(255), @stateProvCode int,
+    @country varchar(100), @countryId int
+
+    OPEN city_cur
+    FETCH NEXT FROM city_cur INTO @city, @stateProv, @country
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN 
+        select @cityNameId = cityNameId from Location.CityName where Name = @city
+        select @stateProvCode = Code from Location.StateProvince where Name = @stateProv
+        select @countryId = CountryId from Location.Country where Name = @country
+
+        IF EXISTS (
+            select cityId 
+            from Location.City 
+            where 
+                CityNameId = @cityNameId and
+                StateProvinceCode = @stateProvCode and
+                CountryId = @countryId
+        )
+        BEGIN
+            UPDATE Location.City 
+            SET Population = @population 
+            where 
+                CityNameId = @cityNameId and
+                StateProvinceCode = @stateProvCode and
+                 CountryId = @countryId
+            FETCH NEXT FROM city_cur INTO @city, @stateProv, @country
+        END
+        ELSE
+        BEGIN
+            INSERT INTO Location.City(CityNameId, StateProvinceCode, CountryId, Population) 
+            VALUES(@cityNameId, @stateProvCode, @countryId, @population)
+            FETCH NEXT FROM city_cur INTO @city, @stateProv, @country
+        END
+    END
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_import_postalCode
+AS
+BEGIN
+    DECLARE postalCode_cur CURSOR FOR SELECT distinct [Postal Code] from WWI_OldData.dbo.Customer
+    DECLARE @postalCode int
+
+    open postalCode_cur
+    FETCH NEXT FROM postalCode_cur INTO @postalCode
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF NOT EXISTS (select code from [Location].PostalCode where @postalCode = Code)
+        BEGIN
+            INSERT INTO Location.PostalCode(Code) VALUES(@postalCode)
+        END
+        FETCH NEXT FROM postalCode_cur INTO @postalCode
+    END
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_import_address
+AS
+BEGIN
+    DECLARE address_cur CURSOR FOR 
+    SELECT 
+    substring(Customer, charindex('(', Customer)+1, charindex(')',Customer)-1-charindex('(', Customer)), 
+    [Postal Code] 
+    from Customer 
+    group by Customer, [Postal Code];
+
+    DECLARE 
+    @cityAndState varchar(55),
+    @city varchar(50),
+    @stateCode char(2),
+    @cityId int,
+    @postalCode int
+
+    OPEN address_cur
+    FETCH NEXT FROM address_cur INTO @cityAndState, @postalCode
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF @cityAndState like '%,%'
+        begin 
+            set @city = substring(@cityAndState, 1, charindex(',',Customer)-1)
+            set @stateCode = substring(@cityAndState, charindex(',', Customer)+1, len(Customer))
+        
+            select @cityId = cityId from Location.City where stateProvinceCode = @stateCode and @city = name 
+            IF NOT EXISTS (select addressId from Address where cityId = @cityId and @postalCode = postalCode)
+            BEGIN
+                INSERT INTO Address(PostalCode, City) VALUES(@postalCode, @cityId)
+            END
+            FETCH NEXT FROM address_cur INTO @cityAndState, @postalCode
+        end 
+        else 
+        begin 
+            INSERT INTO Address(PostalCode) VALUES(@postalCode)
+            FETCH NEXT FROM address_cur INTO @cityAndState, @postalCode
+        end 
+    END
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_import_buyingGroups
+AS 
+BEGIN
+    DECLARE buyingGroup_cur CURSOR FOR SELECT distinct [Buying group] from WWI_OldData.dbo.Customer
+    DECLARE @buyingGroup varchar(100)
+
+    OPEN buyingGroup_cur
+    FETCH NEXT FROM buyingGroup_cur INTO @buyingGroup
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF NOT EXISTS (SELECT name from Customers.BuyingGroup where name = @buyingGroup)
+        BEGIN
+            INSERT INTO Customers.BuyingGroup(Name) Values(@buyingGroup)
+        END
+        FETCH NEXT FROM buyingGroup_cur INTO @buyingGroup
+    END
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_import_businessCategory
+AS 
+BEGIN
+    DECLARE businessCat_cur CURSOR FOR SELECT distinct Name from WWI_OldData.dbo.categories
+    DECLARE @businessCategory varchar(100)
+
+    OPEN businessCat_cur
+    FETCH NEXT FROM businessCat_cur INTO @buyingGroup
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF NOT EXISTS (SELECT name from Customers.BuyingGroup where name = @businessCategory)
+        BEGIN
+            INSERT INTO Customers.BuyingGroup(Name) Values(@businessCategory)
+        END
+        FETCH NEXT FROM businessCat_cur INTO @buyingGroup
+    END
+END
+GO
+
 --TODO: Customer
 --TODO: Contacts
 --TODO: Populate SystemUser 
@@ -184,15 +328,24 @@ GO
 --TODO: Populate Currency
 --TODO: TaxRate, SalesOrderHeader, SalesOrderDetails
 --TODO: Transport, Logistic
+
+exec sp_import_continents;
+exec sp_import_countries;
+exec sp_import_sales_territory;
+exec sp_import_state_province;
+exec sp_import_city_names;
+exec sp_import_cities;
+exec sp_import_postaCode;
+exec sp_import_address;
+exec sp_import_buyingGroups;
+exec sp_import_businessCategory;
+GO
+
+-- TODO: REMOVE TESTING STUFF
 use WWI_OldData
 select * from City;
 select * from Sale;
 select * from [Stock Item];
 select * from dbo.Customer;
 select * from dbo.Employee;
-
-exec sp_import_continents;
-exec sp_import_countries;
-exec sp_import_sales_territory;
-exec sp_import_state_province;
-exec sp_city_names;
+GO

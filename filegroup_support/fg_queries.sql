@@ -40,7 +40,8 @@ GO
 -- (City, State Province) different entries
 select city, [State Province], Count(*) from City group by City, [State Province] order by city;
 GO
-select count(city) from (select city from City group by City, [State Province]) x;
+select count(city) from (select city from City group by City, [State Province], country) x;
+select count(city) from (select city from City group by City, [State Province], country, [Latest Recorded Population]) x;
 GO
 
 -- Continent
@@ -198,5 +199,6 @@ select distinct [Tax Rate] from Sale;
 -- Customer
 select * from Customer;
 select count(distinct [WWI Customer ID]), count(distinct Customer) from Customer;
+select Customer, [Postal Code], count(*) from Customer group by Customer, [Postal Code]
 select AVG(LEN([Primary Contact])) from Customer;
 GO
