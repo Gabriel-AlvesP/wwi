@@ -11,8 +11,10 @@ go
 -- Employee
 select Employee,
 	substring(Employee, 1, charindex(' ', Employee)-1) as 'firstname',
-	substring(Employee, charindex(' ', Employee)+1, LEN(Employee)) as 'lastname'
-from (select distinct Employee from Employee) e; -- All name, first name, last name
+	substring(Employee, charindex(' ', Employee)+1, LEN(Employee)) as 'lastname',
+	[Is Salesperson],
+	Photo
+from (select distinct Employee, Photo, [Is Salesperson] from Employee) e; -- All name, first name, last name
 
 select count(distinct Employee) as 'Different Names' from Employee; -- Number of different names
 
@@ -80,6 +82,7 @@ select avg(len([Buying Group])) from (select distinct [Buying Group] from Custom
 GO
 
 -- Colors
+use WWI_OldData;
 select [Stock Item] from [Stock Item];
 select [Stock Item] from [Stock Item] si where si.[Stock Item] COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%' ;
 
@@ -92,6 +95,15 @@ select distinct substring(x, 1, charindex(')', x)-1) as color from (
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
 ) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
 -- The last 'where' is essential bc of this pattern xxxx(something)(Color) -> something
+
+select distinct ss.color, si.Color from (select distinct substring(x, 1, charindex(')', x)-1) as color from 
+( select substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item])) as x
+	from [Stock Item] si
+	where si.[Stock Item]
+	COLLATE Latin1_General_CS_AS
+	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
+) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%') ss full join [Stock Item] si on ss.color = si.color
+where ss.color is not null or si.Color <> 'N/A'
 
 ------------------------------------------------------------------------------------------------------
 
@@ -172,6 +184,7 @@ GO
 -- Bag, Each, Packet, Pair, Carton = 5
 select distinct [Selling Package] from [Stock Item];
 select distinct [Buying Package] from [Stock Item];
+select si1.[Selling Package], si2.[Buying Package] from (select distinct [Selling Package] from [Stock Item]) si1 full join (select distinct [Buying Package] from [Stock Item]) si2 on si1.[Selling Package]  = si2.[Buying Package]
 GO
 
 -- Color_Product

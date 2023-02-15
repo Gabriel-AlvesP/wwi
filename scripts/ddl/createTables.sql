@@ -24,7 +24,7 @@ CREATE TABLE Customers.Customer (
 CREATE TABLE Authentication.Token (
     Token        uniqueidentifier NOT NULL PRIMARY KEY
     DEFAULT newid(),
-    SentDate     datetime NOT NULL,
+    SentDate     datetime2(2) NOT NULL DEFAULT SYSDATETIME(),
     SystemUserId int NOT NULL,
 ) ON WWIGlobal_fg1;
 CREATE TABLE Sales.Discount (
@@ -37,7 +37,7 @@ CREATE TABLE dbo.ErrorLogs (
     ErrorLogId int IDENTITY NOT NULL PRIMARY KEY,
     ErrorId    smallint NOT NULL,
     UserName   varchar(255) NOT NULL,
-    [Date]     datetime NOT NULL,
+    [Date]     datetime2(2) NOT NULL DEFAULT SYSDATETIME(),
 );
 CREATE TABLE dbo.Error (
     ErrorId      smallint IDENTITY NOT NULL PRIMARY KEY,
@@ -54,10 +54,11 @@ CREATE TABLE Stock.ProductModel (
     ProductModelId         int IDENTITY NOT NULL PRIMARY KEY,
     ProductId              int NOT NULL,
     ProductModel           varchar(255) NULL,
-    BrandId                int NOT NULL,
-    SizeId                 int NOT NULL,
+    BrandId                int NULL,
+    SizeId                 int NULL,
     Barcode                int NOT NULL,
     StandardUnitCost       money NOT NULL,
+    TaxRateId              int NOT NULL,
     RecommendedRetailPrice money NOT NULL,
     Weight                 numeric(8, 3) NOT NULL,
     IsChiller              bit NOT NULL,
@@ -66,8 +67,14 @@ CREATE TABLE Stock.ProductModel (
     BuyingPackageId        smallint NOT NULL,
     SellingPackageId       smallint NOT NULL,
 );
+CREATE TABLE Sales.ProductModel_Discount (
+    ProductModelId         int NOT NULL,
+    DiscountId             int NOT NULL,
+    PRIMARY KEY (ProductModelId, DiscountId)
+);
 CREATE TABLE Customers.BusinessCategory (
     CategoryId int IDENTITY NOT NULL PRIMARY KEY,
+    Name varchar(100) NOT NULL UNIQUE,
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.StateProvince (
     Code             char(2) NOT NULL PRIMARY KEY,
@@ -105,16 +112,13 @@ CREATE TABLE Stock.Color_Product (
     ProductModelId int NOT NULL,
     PRIMARY KEY (ColorId, ProductModelId)
 ) ON WWIGlobal_fg3;
-CREATE TABLE Sales.SalesOrderDetail (
+CREATE TABLE Sales.SalesOrderDetails (
     ProductId         int NOT NULL,
     SaleId            int NOT NULL,
     Quantity          smallint NOT NULL,
     ListedUnitPrice   money NOT NULL,
-    TotalExcludingTax money NOT NULL,
-    TaxRateValue      numeric(6, 3) NOT NULL,
-    TaxAmount         money NOT NULL,
+    TaxRateId         int NOT NULL,
     DiscountId        int NULL,
-    LineTotal         money NOT NULL,
     PRIMARY KEY (ProductId, SaleId)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Customers.BuyingGroup (
@@ -129,13 +133,13 @@ CREATE TABLE dbo.SystemControl (
     Length     bigint NOT NULL,
     Nullable   bit NOT NULL,
     IsUnique   bit NOT NULL,
-    UpdateDate datetime NOT NULL
+    UpdateDate datetime2(2) NOT NULL DEFAULT SYSDATETIME()
 );
 CREATE TABLE dbo.Estimation (
     TableName        varchar(255) NOT NULL,
     EntriesNumber    bigint NOT NULL,
     EstimatedStorage bigint NOT NULL,
-    UpdateDate       datetime NOT NULL
+    UpdateDate       datetime2(2) NOT NULL DEFAULT SYSDATETIME()
 );
 CREATE TABLE Location.Address (
     AddressId  int IDENTITY NOT NULL PRIMARY KEY,
@@ -154,13 +158,13 @@ CREATE TABLE Sales.Currency (
 ) ON WWIGlobal_fg1;
 CREATE TABLE Sales.Salesperson (
     SalespersonId  int NOT NULL PRIMARY KEY,
-    CommissionRate tinyint NOT NULL,
+    CommissionRate tinyint NOT NULL DEFAULT 0,
 ) ON WWIGlobal_fg3;
 CREATE TABLE Sales.CurrencyRate (
     FromCurrency char(3) NOT NULL,
     ToCurrency   char(3) NOT NULL,
     Rate         numeric(6, 3) NOT NULL,
-    UpdateDate   datetime NOT NULL,
+    UpdateDate   datetime2(2) NOT NULL DEFAULT SYSDATETIME(),
     PRIMARY KEY (FromCurrency, ToCurrency)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Shipments.Logistic (
@@ -223,20 +227,22 @@ CREATE TABLE Customers.Contacts (
     IsPrimary  bit NOT NULL,
     CustomerId int NOT NULL
 );
-CREATE TABLE Sales.TaxRate (
-    Value numeric(6, 3) NOT NULL,
-    PRIMARY KEY (Value)
+CREATE TABLE Stock.TaxRate (
+    TaxRateId int IDENTITY NOT NULL,
+    Value numeric(6, 3) NOT NULL UNIQUE,
+    PRIMARY KEY (TaxRateId)
 ) ON WWIGlobal_fg1;
 ALTER TABLE dbo.ErrorLogs ADD CONSTRAINT FKErrorLogs128846 FOREIGN KEY (ErrorId) REFERENCES dbo.Error (ErrorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder501237 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod455898 FOREIGN KEY (ColorId) REFERENCES Stock.Color (ColorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.Color_Product ADD CONSTRAINT FKColor_Prod770171 FOREIGN KEY (ProductModelId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder561622 FOREIGN KEY (ProductId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder444426 FOREIGN KEY (SaleId) REFERENCES Sales.SalesOrderHeader (SaleId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesOrder561622 FOREIGN KEY (ProductId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesOrder444426 FOREIGN KEY (SaleId) REFERENCES Sales.SalesOrderHeader (SaleId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer989078 FOREIGN KEY (BuyingGroupId) REFERENCES Customers.BuyingGroup (BuyingGroupId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer142132 FOREIGN KEY (CategoryId) REFERENCES Customers.BusinessCategory (CategoryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder38550 FOREIGN KEY (BillToCustomer) REFERENCES Customers.Customer (CustomerId) ON DELETE NO ACTION ON UPDATE NO ACTION;
-ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder274263 FOREIGN KEY (DiscountId) REFERENCES Sales.Discount (DiscountId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesOrder274263 FOREIGN KEY (DiscountId) REFERENCES Sales.Discount (DiscountId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesDetails_TaxRate FOREIGN KEY (TaxRateId) REFERENCES Stock.TaxRate (TaxRateId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Authentication.Token ADD CONSTRAINT FKToken31840 FOREIGN KEY (SystemUserId) REFERENCES Authentication.SystemUser (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Authentication.SystemUser ADD CONSTRAINT FKSystemUser205753 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.CurrencyRate ADD CONSTRAINT FKCurrencyRa46653 FOREIGN KEY (FromCurrency) REFERENCES Sales.Currency (Abbreviation) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -260,7 +266,9 @@ ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod979572 FOREIGN KEY (Si
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod345309 FOREIGN KEY (BrandId) REFERENCES Stock.Brand (BrandId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod245369 FOREIGN KEY (BuyingPackageId) REFERENCES Stock.Package (PackageId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductMod130361 FOREIGN KEY (SellingPackageId) REFERENCES Stock.Package (PackageId) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE Stock.ProductModel ADD CONSTRAINT FKProductModel_TaxRate FOREIGN KEY (TaxRateId) REFERENCES Stock.TaxRate (TaxRateId) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE Sales.ProductModel_Discount ADD CONSTRAINT FKProductModel_Discount1 FOREIGN KEY (ProductModelId) REFERENCES Stock.ProductModel (ProductModelId) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Sales.ProductModel_Discount ADD CONSTRAINT FKProductModel_Discount2 FOREIGN KEY (DiscountId) REFERENCES Sales.Discount (DiscountId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder216469 FOREIGN KEY (SalespersonId) REFERENCES Sales.Salesperson (SalespersonId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Contacts ADD CONSTRAINT FKContacts573379 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Sales.SalesOrderDetail ADD CONSTRAINT FKSalesOrder809659 FOREIGN KEY (TaxRateValue) REFERENCES Sales.TaxRate (Value) ON DELETE CASCADE ON UPDATE CASCADE;
 GO

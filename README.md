@@ -157,6 +157,17 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## Known Issues
 
+- update create/drop tables
+
+   1. SalesOrderDetails
+
+   2. ProductModel_Discount
+
+   3. TaxRate table and FKs
+
+   4. FK's
+
+
 ## TODO
 
 - [x] ER
