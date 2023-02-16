@@ -82,27 +82,37 @@ select avg(len([Buying Group])) from (select distinct [Buying Group] from Custom
 GO
 
 -- Colors
-use WWI_OldData;
 select [Stock Item] from [Stock Item];
 select [Stock Item] from [Stock Item] si where si.[Stock Item] COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%' ;
 
 select distinct Color from [Stock Item];
-select distinct substring(x, 1, charindex(')', x)-1) as color from (
-	select substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item])) as x
-	from [Stock Item] si
-	where si.[Stock Item]
-	COLLATE Latin1_General_CS_AS
-	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
-) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- Get different color from stock item name
--- The last 'where' is essential bc of this pattern xxxx(something)(Color) -> something
 
-select distinct ss.color, si.Color from (select distinct substring(x, 1, charindex(')', x)-1) as color from 
-( select substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item])) as x
+-- Get different color from stock item name
+select distinct substring(x, 1, charindex(')', x)-1) as color from (
+	select substring([Stock Item], charindex('(', [Stock Item])+1, len([Stock Item])) as x
+	from [Stock Item] si
+	where si.[Stock Item]
+	COLLATE Latin1_General_CS_AS
+	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%' 
+) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'; -- The last 'where' is essential bc of this pattern xxxx(something)(Color) -> something
+
+-- 
+select distinct ss.color, si.Color 
+from (
+	select 
+	distinct substring(x, 1, charindex(')', x)-1) as color 
+	from 
+	(select 
+		substring([Stock Item],
+		charindex('(', [Stock Item])+1,
+		Len([Stock Item])) as x
 	from [Stock Item] si
 	where si.[Stock Item]
 	COLLATE Latin1_General_CS_AS
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'
-) s where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%') ss full join [Stock Item] si on ss.color = si.color
+	) s 
+	where x COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
+) ss full join [Stock Item] si on ss.color = si.color
 where ss.color is not null or si.Color <> 'N/A'
 
 ------------------------------------------------------------------------------------------------------
@@ -114,6 +124,7 @@ GO
 
 -- Different Products without models
 --select avg(len(NoModelProducts)) from ( -- Avg
+use WWI_OldData;
 select distinct NoModelProducts from (select case when sol like '%[0-9][gm]' or sol like '%[1-9]mm'
 then
 	-- Remove size from products
@@ -138,8 +149,6 @@ from (
 		COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 	) si
 ) x) y
---)z; -- Avg
-GO
 
 -- Products w/ models (4)
 --select avg(len(sol)) from ( -- Avg
@@ -148,14 +157,78 @@ COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 --) x -- Avg
 GO
 
+-- All different products and its models
+select distinct case when si.product 
+COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
+THEN
+	-- Product without sub-model
+	case when si.product COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
+	then
+		-- Remove color from the product name
+		substring(si.product, 1, charindex('(', si.product)-2)
+	else
+		-- Products without color on the name
+		case when si.product like '%[0-9][gm]' or si.product like '%[1-9]mm'
+		then
+			-- Remove size from products
+			 SUBSTRING(si.product, 1,  len(si.product) - charindex(' ', reverse(si.product)))
+		else
+			-- Products without the size on the name
+			si.product
+		end
+	end 
+ELSE
+	-- Product with sub-model
+	substring(si.product, 1, charindex('-', si.product)-1)
+END as product, 
+case when si.product COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
+THEN
+	case when 
+		-- Model
+		substring(si.product, charindex('-', si.product)+2, len(si.product)) 
+	like '(%'
+	then
+		--
+		substring(
+			substring(si.product, charindex('-', si.product)+2, len(si.product)),
+			1,
+			charindex(')', substring(si.product, charindex('-', si.product)+2, len(si.product)))
+		)
+	else
+		case when 
+			substring(si.product, charindex('-', si.product)+2, len(si.product)) 
+ 		like '%(%'
+		then
+			-- Remove color
+			SUBSTRING(
+				substring(si.product, charindex('-', si.product)+2, len(si.product)),
+				1,
+				charindex('(', substring(si.product, charindex('-', si.product)+2, len(si.product)) )-1
+			)
+		else
+			substring(si.product, charindex('-', si.product)+2, len(si.product)) 
+		END
+	END
+ELSE
+	'N/A'
+END as Model
+from (
+	select distinct [Stock Item] as product
+	 from [Stock Item]
+) si;
+GO
+
 -- Number of models (33)
 --select avg(len(productModel)) from ( -- Avg
-	select distinct productModel from (select case when x.sq like '(%'
+	select distinct productModel from (
+		select case when x.sq like '(%'
 	then
+		-- (hip hip array)
 		substring(x.sq, 1, charindex(')', x.sq))
 	else
 		case when x.sq like '%(%'
 		then
+			-- remove color
 			SUBSTRING(x.sq, 1, charindex('(', x.sq)-1)
 		else
 			x.sq
@@ -188,12 +261,14 @@ select si1.[Selling Package], si2.[Buying Package] from (select distinct [Sellin
 GO
 
 -- Color_Product
-select color, [Stock Item] from [Stock Item] where color != 'N/A' and color is not null and  [Stock Item]
+-- Product without the color in the name and with the column color not null
+select color, [Stock Item] from [Stock Item] where color <> 'N/A'  and  [Stock Item]
 	COLLATE Latin1_General_CS_AS
-	not like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'; -- check for items without the color in the name and with the column color not null
+	not like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%'; 
 
+-- Number of products with the color int the name
 select count(substring([Stock Item], charindex('(', [Stock Item])+1, Len([Stock Item]))) as 'N Product w/ Color'
-	from [Stock Item] si
+	from (select distinct [Stock Item] from [Stock Item]) si
 	where si.[Stock Item]
 	COLLATE Latin1_General_CS_AS
 	like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%)%';

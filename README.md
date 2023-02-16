@@ -159,14 +159,7 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 - update create/drop tables
 
-   1. SalesOrderDetails
-
-   2. ProductModel_Discount
-
-   3. TaxRate table and FKs
-
-   4. FK's
-
+   1. FK's
 
 ## TODO
 
