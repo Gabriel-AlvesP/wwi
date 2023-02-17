@@ -55,8 +55,8 @@ CREATE TABLE Stock.ProductModel (
     ProductId              int NOT NULL,
     ProductModel           varchar(255) NULL,
     BrandId                int NULL,
-    SizeId                 int NULL,
-    Barcode                int NOT NULL,
+    SizeId                 int NULL, --TODO: Change to a many to many rel
+    Barcode                bigint NULL,
     StandardUnitCost       money NOT NULL,
     TaxRateId              int NOT NULL,
     RecommendedRetailPrice money NOT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE Location.City (
     PRIMARY KEY (CityId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.PostalCode (
-    Code int IDENTITY NOT NULL,
+    Code int NOT NULL,
     PRIMARY KEY (Code)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Location.StateProvince_Country (

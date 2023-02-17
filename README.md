@@ -161,6 +161,10 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
    1. FK's
 
+- ER
+
+   - Size - ProductModel need to be a many to many rel
+
 ## TODO
 
 - [x] ER
