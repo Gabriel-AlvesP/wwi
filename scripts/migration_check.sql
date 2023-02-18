@@ -33,7 +33,24 @@ SELECT distinct  ProductId , Model , SellingPackageId ,  SizeId , StandardUnitCo
 
 -- Migration check
 
--- Number of Customers
+-- Number of Customers :)
+select count(distinct Customer) from WWI_OldData.dbo.Customer;
+select count(*) from Customers.Customer;
 
-select count(distinct [WWI Customer ID]), count(distinct Customer) from WWI_OldData.dbo.Customer;
-select count(*) from Customers.Customer
+-- Customers per Category :)
+select Category, count(*) from WWI_OldData.dbo.Customer group by Category
+select CategoryId, count(*) from Customers.Customer group by categoryId
+
+-- Number of Cities :)
+select count(distinct City) from WWI_OldData.dbo.City
+select count(Name) from Location.CityName
+
+-- States (57) .txt file :)
+select count(*) as StatesNumber from Location.StateProvince 
+select * from [Location].StateProvince
+
+-- State_Country :)
+select * from Location.StateProvince_Country
+
+-- Number of sales
+select count(distinct [WWI Invoice Id]) from WWI_OldData.dbo.Sale 

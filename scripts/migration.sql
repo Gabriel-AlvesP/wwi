@@ -107,7 +107,7 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        IF EXISTS (select code from Location.StateProvince where @code = code )
+        IF EXISTS (select code from Location.StateProvince where @code = code)
         BEGIN
             FETCH NEXT FROM stateProv_cur INTO @code, @name
         END
@@ -117,7 +117,12 @@ BEGIN
             from [Location].SalesTerritory 
             where Territory = (SELECT TOP 1 [Sales Territory] from WWI_OldData.dbo.City where [State Province] = @name ) collate DATABASE_DEFAULT
 
-            INSERT INTO Location.StateProvince VALUES(@code, @name, @salesTerId)
+            INSERT INTO Location.StateProvince(Code, Name, SalesTerritoryId) VALUES(@code, @name, @salesTerId)
+
+            DECLARE @countryId int = (select CountryId from [Location].Country where Name = 'United States')
+            INSERT INTO Location.StateProvince_Country(StateProvinceCode, CountryId)
+            VALUES(@code, @countryId)
+
             FETCH NEXT FROM stateProv_cur INTO @code, @name
         END 
     END
@@ -127,34 +132,6 @@ BEGIN
     DEALLOCATE stateProv_cur
 END
 GO
-
---CREATE OR ALTER PROCEDURE sp_import_state_country
---AS
---BEGIN
---    DECLARE country_state_cur CURSOR FOR SELECT [State Province], Country from WWI_OldData.dbo.City GROUP BY [State Province], Country 
---    DECLARE @country varchar(100), @state varchar(100), @countryId int, @stateProvId int
---    
---    OPEN country_state_cur
---    FETCH NEXT FROM country_state_cur INTO @state, @country
---
---    WHILE @@FETCH_STATUS = 0
---    BEGIN
---        select @countryId = countryId FROM Location.Country where name = @country
---        select @stateProvId = Code FROM Location.StateProvince where name = @state
---
---        IF @countryId is null or @stateProvId is null
---        BEGIN 
---            PRINT N'Error: There is no '+ @country +' or ' + @state + 'in the current database!'
---            FETCH NEXT FROM country_state_cur INTO @state, @country
---        END
---        
---        INSERT INTO Location.StateProvince_Country(StateProvinceCode, CountryId) VALUES(@stateProvId,@countryId)
---        FETCH NEXT FROM country_state_cur INTO @state, @country
---    END
---    CLOSE country_state_cur
---    DEALLOCATE country_state_cur
---END
---GO
 
 CREATE OR ALTER PROCEDURE sp_import_city_names
 AS
@@ -292,7 +269,7 @@ BEGIN
         BEGIN 
             IF NOT EXISTS (SELECT addressId from Location.Address where cityId is null and PostalCode = @postalCode)
             BEGIN
-            INSERT INTO Location.Address(PostalCode) VALUES(@postalCode)
+                INSERT INTO Location.Address(PostalCode) VALUES(@postalCode)
             END
         END 
         FETCH NEXT FROM address_cur INTO @cityAndState, @postalCode
@@ -364,7 +341,7 @@ BEGIN
     @customerId int,
     @category varchar(50), @categoryId int,
     @buyingGroup varchar(100), @buyingGroupId int,
-    @cityAndState varchar(55), @city varchar(50), @stateCode char(2), @cityId int, @addressId int,
+    @cityAndState varchar(55), @city varchar(50), @stateCode char(2), @cityId int, @addressId int, @citynameId varchar(100),
     @postalCode int,
     @contact varchar(50),
     @isHeadOffice bit
@@ -379,12 +356,26 @@ BEGIN
         IF @cityAndState like '%,%'
         BEGIN 
             -- Customer is not headoffice, insert address (check cityName and state)
-            set @city = substring(@cityAndState, 1, charindex(',',@cityAndState)-1)
-            set @stateCode = substring(@cityAndState, charindex(',', @cityAndState)+1, len(@cityAndState))
-        
-            select @cityId = cityId from Location.City c join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city
+            set @city = trim(substring(@cityAndState, 1, charindex(',',@cityAndState)-1))
+            set @stateCode = trim(substring(@cityAndState, charindex(',', @cityAndState)+1, len(@cityAndState)))
 
-            IF NOT EXISTS (select addressId from Location.Address where cityId = @cityId and @postalCode = postalCode)
+            -- Start city handling 
+            IF NOT EXISTS (select cityId from Location.City c join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city)
+            BEGIN
+                select @citynameId = CityNameId from Location.CityName where Name = @city
+
+                INSERT INTO Location.City(Population, CityNameId, StateProvinceCode, CountryId)
+                VALUES(0, @citynameId, @stateCode, 1)
+
+                set @cityId = SCOPE_IDENTITY()
+            END
+            ELSE
+            BEGIN
+                select @cityId = cityId from Location.City c join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city
+            END
+            -- End of city handling
+
+            IF NOT EXISTS (select addressId from Location.Address where cityId = @cityId and cast(@postalCode as int) = postalCode)
             BEGIN
                 INSERT INTO Location.Address(PostalCode, CityId) VALUES(@postalCode, @cityId)
                 set @addressId = SCOPE_IDENTITY()
@@ -398,7 +389,7 @@ BEGIN
         ELSE 
         BEGIN 
             -- Customer is headOffice, inster address with only postal code
-            IF NOT EXISTS (SELECT addressId from Location.Address where PostalCode = @postalCode and CityId is null)
+            IF NOT EXISTS (SELECT addressId from Location.Address where PostalCode = cast(@postalCode as int) and CityId is null)
             BEGIN
                 INSERT INTO Location.Address(PostalCode) VALUES(@postalCode)
                 set @addressId = SCOPE_IDENTITY()
@@ -414,8 +405,10 @@ BEGIN
         -- Start Customer 
         select @buyingGroupId = buyingGroupId from Customers.BuyingGroup where Name = @buyingGroup
         select @categoryId = categoryId from Customers.BusinessCategory where Name = @category
-        IF @categoryId is NULL
+        
+        IF not exists (select  categoryId from Customers.BusinessCategory where Name = @category)
         BEGIN
+
             -- Check for misspelled categories (Quiosk, GiftShop)
             IF @category like 'Q%'
             BEGIN
@@ -976,7 +969,7 @@ GO
 CREATE OR ALTER PROCEDURE sp_import_salesOrderHeader
 AS
 BEGIN
-    DECLARE sales_sp CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale 
+    DECLARE sales_sp CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale
 
     DECLARE 
     @invoiceID int,
@@ -1002,17 +995,17 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-	        -- cityId
-	        SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId
-	        SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
-	        SELECT @stateId = Code from Location.StateProvince where Name = @state
-	        SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId
+	    -- cityId
+	    SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId
+	    SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
+	    SELECT @stateId = Code from Location.StateProvince where Name = @state
+	    SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId
 	
-	        -- salespersonId
-	        select @salespersonId = EmployeeId from CompanyResources.Employee where CONCAT_WS( ' ', FirstName, LastName) = (select Employee from WWI_OldData.dbo.Employee where [Employee Key] = @salespersonId) collate DATABASE_DEFAULT
+	    -- salespersonId
+	    select @salespersonId = EmployeeId from CompanyResources.Employee where CONCAT_WS( ' ', FirstName, LastName) = (select Employee from WWI_OldData.dbo.Employee where [Employee Key] = @salespersonId) collate DATABASE_DEFAULT
 	
-	        -- BillTo
-	        select @billToCustomer = CustomerId from Customers.Customer where BuyingGroupId = (select BuyingGroupId from Customers.Customer where CustomerId = @customerId) and IsHeadOffice = 1
+	    -- BillTo
+	    select @billToCustomer = CustomerId from Customers.Customer where BuyingGroupId = (select BuyingGroupId from Customers.Customer where CustomerId = @customerId) and IsHeadOffice = 1
 
         IF NOT EXISTS (SELECT SaleId from Sales.SalesOrderHeader where  SaleId = @invoiceID)
         --BEGIN
@@ -1158,7 +1151,6 @@ exec sp_import_sales_territory;
 GO
 exec sp_import_states;
 GO
---exec sp_import_state_country
 exec sp_import_city_names;
 GO
 exec sp_import_cities;

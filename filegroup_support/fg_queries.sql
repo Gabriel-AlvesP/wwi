@@ -70,7 +70,7 @@ select count([Postal Code]), count(distinct [Postal Code]) as 'Different Postal 
 GO
 
 -- Business Category
-select distinct Category from Customer;
+select distinct Category from WWI_OldData.dbo.Customer;
 select count(distinct Category) from Customer; -- same as the lookup.xlsx
 -- GiftShop, Kiosk repeated
 -- correction: 5
