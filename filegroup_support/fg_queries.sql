@@ -152,7 +152,7 @@ from (
 
 -- Products w/ models (4)
 --select avg(len(sol)) from ( -- Avg
-select distinct substring([Stock Item], 1, charindex('-', [Stock Item])-1) as sol from [Stock Item] where [Stock Item]
+select distinct substring([Stock Item], 1, charindex('-', [Stock Item])-2) as sol from [Stock Item] where [Stock Item]
 COLLATE Latin1_General_CS_AS like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 --) x -- Avg
 GO

@@ -53,9 +53,9 @@ CREATE TABLE CompanyResources.Employee (
 CREATE TABLE Stock.ProductModel (
     ProductModelId         int IDENTITY NOT NULL PRIMARY KEY,
     ProductId              int NOT NULL,
-    ProductModel           varchar(255) NULL,
+    Model                  varchar(255) NULL,
     BrandId                int NULL,
-    SizeId                 int NULL, --TODO: Change to a many to many rel
+    SizeId                 int NULL, 
     Barcode                bigint NULL,
     StandardUnitCost       money NOT NULL,
     TaxRateId              int NOT NULL,

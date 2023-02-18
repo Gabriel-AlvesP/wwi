@@ -2,6 +2,8 @@
 use WWIGlobal
 GO
 
+SET ANSI_NULLS OFF;
+GO
 SET NOCOUNT ON;
 GO
 
@@ -428,7 +430,7 @@ BEGIN
         IF NOT EXISTS (
             SELECT CustomerId 
             from Customers.Customer 
-            where BuyingGroupId = @buyingGroup
+            where BuyingGroupId = @buyingGroupId
             and CategoryId = @categoryId
             and AddressId = @addressId
         )
@@ -563,7 +565,7 @@ CREATE OR ALTER PROCEDURE sp_import_brand
 AS
 BEGIN
     DECLARE brand_cur CURSOR FOR 
-    SELECT distinct Brand from [WWI_OldData].dbo.[Stock Item] where brand <> N'N/A'
+    SELECT distinct Brand from [WWI_OldData].dbo.[Stock Item] --where brand <> N'N/A'
 
     DECLARE @brand varchar(60)
 
@@ -684,13 +686,13 @@ BEGIN
 			case when si.product COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
 			then
 				-- Remove color from the product name
-				substring(si.product, 1, charindex('(', si.product)-2)
+				trim(substring(si.product, 1, charindex('(', si.product)-2))
 			else
 				-- Products without color on the name
 				case when si.product like '%[0-9][gm]' or si.product like '%[1-9]mm'
 				then
 					-- Remove size from products
-					 SUBSTRING(si.product, 1,  len(si.product) - charindex(' ', reverse(si.product)))
+					 trim(SUBSTRING(si.product, 1,  len(si.product) - charindex(' ', reverse(si.product))))
 				else
 					-- Products without the size on the name
 					si.product
@@ -698,7 +700,7 @@ BEGIN
 			end 
 		ELSE
 			-- Product with sub-model
-			substring(si.product, 1, charindex('-', si.product)-1)
+			trim(substring(si.product, 1, charindex('-', si.product)-2))
 		END
 		from (
 			select distinct [Stock Item] as product
@@ -723,24 +725,24 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE sp_import_productModel
+CREATE OR ALTER PROCEDURE sp_import_productM
 AS
-BEGIN
+ BEGIN
     DECLARE product_cur CURSOR FOR 
-	select distinct case when si.product
+	select case when si.product
 	COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
 	THEN
 		-- Product without sub-model
 		case when si.product COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
 		then
 			-- Remove color from the product name
-			substring(si.product, 1, charindex('(', si.product)-2)
+			trim(substring(si.product, 1, charindex('(', si.product)-2))
 		else
 			-- Products without color on the name
 			case when si.product like '%[0-9][gm]' or si.product like '%[1-9]mm'
 			then
 				-- Remove size from products
-				 SUBSTRING(si.product, 1,  len(si.product) - charindex(' ', reverse(si.product)))
+				 trim(SUBSTRING(si.product, 1,  len(si.product) - charindex(' ', reverse(si.product))))
 			else
 				-- Products without the size on the name
 				si.product
@@ -748,7 +750,7 @@ BEGIN
 		end 
 	ELSE
 		-- Product with sub-model
-		substring(si.product, 1, charindex('-', si.product)-1)
+		trim(substring(si.product, 1, charindex('-', si.product)-2))
 	END as product, 
 
     -- Model
@@ -756,32 +758,32 @@ BEGIN
 	THEN
 		case when 
 			-- Model
-			substring(si.product, charindex('-', si.product)+2, len(si.product)) 
+			substring(si.product, charindex('-', si.product)+2, len(si.product))
 		like '(%'
 		then
 			-- (hip hip array)
-			substring(
+			trim(substring(
 				substring(si.product, charindex('-', si.product)+2, len(si.product)),
 				1,
 				charindex(')', substring(si.product, charindex('-', si.product)+2, len(si.product)))
-			)
+			))
 		else
 			case when 
 				substring(si.product, charindex('-', si.product)+2, len(si.product)) 
 	 		like '%(%'
 			then
 				-- Remove color
-				SUBSTRING(
+				trim(SUBSTRING(
 					substring(si.product, charindex('-', si.product)+2, len(si.product)),
 					1,
 					charindex('(', substring(si.product, charindex('-', si.product)+2, len(si.product)) )-1
-				)
+				))
 			ELSE
-				substring(si.product, charindex('-', si.product)+2, len(si.product)) 
+				trim(substring(si.product, charindex('-', si.product)+2, len(si.product)))
 			END
 		END
 	ELSE
-        Null
+        ''
 	END as model,
 
     -- color_name
@@ -792,34 +794,38 @@ BEGIN
         case when substring(si.product, charindex('(', si.product)+1, len(si.product))
         COLLATE Latin1_General_CS_AS like '[ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
         THEN 
-	        substring(
+	        trim(substring(
 	            substring(si.product, charindex('(', si.product)+1, len(si.product)),
 	            1,
 	            charindex(')', substring(si.product, charindex('(', si.product)+1, len(si.product)))-1
-	        )
+	        ))
         ELSE
             --(hip hip array) (color)
-            substring(
+            trim(substring(
                 substring(si.product, charindex('(', si.product)+1, len(si.product)),
                 charindex(')', substring(si.product, charindex('(', si.product)+1, len(si.product)))+1,
                 len(substring(si.product, charindex('(', si.product)+1, len(si.product)))
-            )
+            ))
        END
     ELSE
-        Null
+        NULL
     END as nameColor,
-    color,
+    case when color = 'N/A' THEN
+        NULL
+    else
+        color
+    end,
 	[Selling Package],
 	[Buying Package],
-	Brand,
+    Brand,
 	Size,
 	[Lead Time Days],
 	[Quantity Per Outer],
 	[Is Chiller Stock],
 	case when Barcode = N'N/A' THEN
-        null
+        0 
     ELSE
-        barcode 
+        cast(barcode as bigint)
     END,
 	[Tax Rate],
 	[Unit Price],
@@ -849,7 +855,7 @@ BEGIN
     @color_name varchar(40), @color varchar(40), @colorId int,
     @sellingPackage varchar(100), @sellingPackageId int,
     @buyingPackage varchar(100), @buyingPackageId int,
-    @brand varchar(40), @brandId int,
+    @brand varchar(50), @brandId int,
     @size varchar(100), @sizeId int,
     @leadTimeDays tinyint,
     @packageQuantity int,
@@ -861,7 +867,8 @@ BEGIN
     @weight numeric(8,3) 
 
     OPEN product_cur
-    FETCH NEXT FROM product_cur INTO @product,
+    FETCH NEXT FROM product_cur INTO 
+    @product,
 	@model,
     @color_name,
     @color,
@@ -880,7 +887,7 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        IF @color = 'N/A'
+        IF @color is null 
         BEGIN
             SELECT @colorId = ColorId from Stock.Color where Name = @color_name
         END 
@@ -894,64 +901,57 @@ BEGIN
         SELECT @buyingPackageId = PackageId from Stock.Package where Name = @buyingPackage
         SELECT @brandId = BrandId from Stock.Brand where Name = @brand
         SELECT @sizeId = sizeId from Stock.[Size] where Value = @size
-        SELECT @taxRateId = TaxRateId from Stock.TaxRate where Value = @taxRate
-        SELECT @productModelId = productModelId from Stock.ProductModel where ProductModel = @model and ProductId = @productId
-        
-        IF @productModelId is not null
+        SELECT @taxRateId = TaxRateId from Stock.TaxRate where Value = cast(@taxRate as numeric(6,3))
+
+        if not exists (select ProductModelId from Stock.ProductModel 
+        where 
+            ProductId = @productId 
+            and model = @model 
+            and @sellingPackageId = SellingPackageId 
+            and @buyingPackageId = BuyingPackageId 
+            and sizeId = @sizeId 
+            and TaxRateId = @taxRateId 
+            and StandardUnitCost = cast(@unitCost as money) 
+            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+            and BrandId = @brandId 
+            and RecommendedRetailPrice = cast(@recommendedRetail as money) 
+            and Weight = cast(@weight as numeric(8,3)) 
+            and IsChiller = cast(@isChiller as bit) 
+            and LeadTimeDays = cast(@leadTimeDays as tinyint)
+            and PackageQuantity = cast(@packageQuantity as int))
         BEGIN
-            UPDATE Stock.ProductModel SET 
-			BrandId = @brandId,
-			SizeId = @sizeId,
-			TaxRateId = @taxRateId,
-			Barcode = @barcode,
-			StandardUnitCost = @unitCost,
-			RecommendedRetailPrice = @recommendedRetail,
-			Weight = @weight,
-			IsChiller = @isChiller,
-			LeadTimeDays = @leadTimeDays,
-			PackageQuantity = @packageQuantity,
-			BuyingPackageId = @buyingPackageId,
-			SellingPackageId = @sellingPackageId
-            WHERE productModelId = @productModelId
-        END
-        ELSE
-        BEGIN
-            INSERT INTO Stock.ProductModel(
-            ProductId,
-			ProductModel,
-			BrandId,
-			SizeId,
-			TaxRateId,
-			Barcode,
-			StandardUnitCost,
-			RecommendedRetailPrice,
-			Weight,
-			IsChiller,
-			LeadTimeDays,
-			PackageQuantity,
-			BuyingPackageId,
-			SellingPackageId
-            ) VALUES(
-                @productId,
-                @model,
-                @brandId,
-                @sizeId,
-                @taxRateId,
-                @barcode,
-                @unitCost,
-                @recommendedRetail,
-                @weight,
-                @isChiller,
-                @leadTimeDays,
-                @packageQuantity,
-                @buyingPackageId,
-                @sellingPackageId
-			)
+            INSERT INTO Stock.ProductModel(ProductId, Model, BrandId, SizeId, Barcode, StandardUnitCost, TaxRateId, RecommendedRetailPrice, Weight, IsChiller, LeadTimeDays, PackageQuantity, BuyingPackageId, SellingPackageId)
+            VALUES (@productId, @model, @brandId, @sizeId, cast(@barcode as bigint), cast(@unitCost as money), @taxRateId, cast(@recommendedRetail as money), cast(@weight as numeric(8,3)), cast(@isChiller as bit), cast(@leadTimeDays as tinyint), cast(@packageQuantity as int), @buyingPackageId, @sellingPackageId)
 
             INSERT INTO Stock.Color_Product(ColorId, ProductModelId) VALUES(@colorId, SCOPE_IDENTITY())
         END
+        ELSE
+        BEGIN
+	        select @productModelId = ProductModelId from Stock.ProductModel 
+	        where 
+	            ProductId = @productId 
+	            and model = @model 
+	            and @sellingPackageId = SellingPackageId 
+	            and @buyingPackageId = BuyingPackageId 
+	            and sizeId = @sizeId 
+	            and TaxRateId = @taxRateId 
+	            and StandardUnitCost = cast(@unitCost as money) 
+	            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+	            and BrandId = @brandId 
+	            and RecommendedRetailPrice = cast(@recommendedRetail as money) 
+	            and Weight = cast(@weight as numeric(8,3)) 
+	            and IsChiller = cast(@isChiller as bit) 
+	            and LeadTimeDays = cast(@leadTimeDays as tinyint)
+	            and PackageQuantity = cast(@packageQuantity as int)
 
-	    FETCH NEXT FROM product_cur INTO @product,
+            IF NOT EXISTS (SELECT colorId from Stock.Color_Product where colorId = @colorId and ProductModelId = @productModelId)
+            BEGIN
+                INSERT INTO Stock.Color_Product(ColorId, ProductModelId) VALUES(@colorId, @productModelId)
+            END
+        END
+
+	    FETCH NEXT FROM product_cur INTO 
+	    @product,
 		@model,
 	    @color_name,
 	    @color,
@@ -1095,7 +1095,7 @@ BEGIN
             END
         END
 
-        select @productModelId = ProductModelId from Stock.ProductModel where productId = (select productId from Stock.Product where Name = @stockItemName) and ProductModel = @productModel
+        select @productModelId = ProductModelId from Stock.ProductModel where productId = (select productId from Stock.Product where Name = @stockItemName) and Model = @productModel
 
         IF EXISTS (SELECT saleId from Sales.SalesorderDetails where SaleId = @saleId and ProductId = @productModelId)
         BEGIN
@@ -1147,57 +1147,52 @@ GO
 SET NOCOUNT ON;
 GO
 exec sp_populate_currency;
+GO
 exec sp_populate_currencyRate;
+GO
 exec sp_import_continents;
+GO
 exec sp_import_countries;
+GO
 exec sp_import_sales_territory;
+GO
 exec sp_import_states;
+GO
 --exec sp_import_state_country
 exec sp_import_city_names;
+GO
 exec sp_import_cities;
+GO
 exec sp_import_postalCode;
+GO
 exec sp_import_address;
+GO
 exec sp_import_buyingGroups;
+GO
 exec sp_import_businessCategory;
+GO
 exec sp_import_customer;
+GO
 exec sp_import_employee;
+GO
 exec sp_import_colors;
+GO
 exec sp_import_brand;
+GO
 exec sp_import_package;
+GO
 exec sp_import_size;
+GO
 exec sp_import_taxRate;
+GO
 exec sp_import_product;
-exec sp_import_productModel;
+GO
+exec sp_import_productM;
+GO
 exec sp_import_salesOrderHeader;
+GO
 exec sp_import_salesOrderDetails;
 GO
 
 SET NOCOUNT OFF;
-GO
-
-use WWIGlobal
-GO
-select * from Sales.Currency;
-select * from Sales.CurrencyRate;
-select * from Location.Continent
-select * from Location.Country;
-select * from Location.SalesTerritory
-select * from Location.StateProvince
-select * from Location.StateProvince_Country
-select * from Location.CityName
-select * from Location.City
-select * from [Location].PostalCode
-select * from Location.Address
-select * from Customers.BuyingGroup
-select * from Customers.BusinessCategory
-select * from Customers.Customer
-select * from CompanyResources.Employee
-select * from Sales.Salesperson
-select * from Stock.Color
-select * from Stock.Brand
-select * from Stock.Package
-select * from Stock.[Size]
-select * from Stock.TaxRate
-select * from Stock.Product
-select * from Stock.ProductModel
 GO
