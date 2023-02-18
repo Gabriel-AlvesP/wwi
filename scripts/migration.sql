@@ -969,7 +969,8 @@ GO
 CREATE OR ALTER PROCEDURE sp_import_salesOrderHeader
 AS
 BEGIN
-    DECLARE sales_sp CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale
+    SET IDENTITY_INSERT Sales.SalesOrderHeader ON
+    DECLARE sales_cur CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale
 
     DECLARE 
     @invoiceID int,
@@ -978,20 +979,10 @@ BEGIN
     @billToCustomer int,
     @dueDate date,
     @oldCityId int, @cityName varchar(50), @state varchar(50),
-    @cityId int, @cityNameId int, @stateId char(2), 
-    @Currency char(3) = 'EUR'
+    @cityId int, @cityNameId int, @stateId char(2)
 
-    OPEN sales_sp
-    FETCH NEXT FROM sales_sp INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
-
---    CREATE table #tempTable (
---        CustomerId int,
---        BillToCustomer int,
---        SalespersonId int,
---        DueDate date,
---        CityId int,
---        Currency char(3)
---    )
+    OPEN sales_cur
+    FETCH NEXT FROM sales_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
@@ -1007,26 +998,18 @@ BEGIN
 	    -- BillTo
 	    select @billToCustomer = CustomerId from Customers.Customer where BuyingGroupId = (select BuyingGroupId from Customers.Customer where CustomerId = @customerId) and IsHeadOffice = 1
 
-        IF NOT EXISTS (SELECT SaleId from Sales.SalesOrderHeader where  SaleId = @invoiceID)
-        --BEGIN
-            --IF NOT EXISTS (SELECT SaleId from Sales.SalesOrderHeader where saleId = @invoiceId and CustomerId = @customerId)
-            --BEGIN
-             --   INSERT INTO #tempTable(CustomerId, BillToCustomer, SalespersonId, DueDate, CityId, Currency) VALUES(@customerId, @billToCustomer,@salespersonId, @dueDate, @cityId, 'EUR'  )
-            --END
-        --END 
-        --ELSE 
+        IF NOT EXISTS (SELECT SaleId from Sales.SalesOrderHeader where SaleId = @invoiceID)
         BEGIN 
-	        INSERT INTO Sales.SalesOrderHeader(saleId, CustomerId, SalespersonId, BillToCustomer, DueDate, CityId, Currency )
+	        INSERT INTO Sales.SalesOrderHeader(saleId, CustomerId, SalespersonId, BillToCustomer, DueDate, CityId, Currency)
             VALUES(@invoiceID, @customerId, @salespersonId, @billToCustomer, @dueDate, @cityId, 'EUR')
 	    END
 
-        FETCH NEXT FROM sales_sp INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
+        FETCH NEXT FROM sales_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
     END
-    --    INSERT INTO Sales.SalesOrderHeader(CustomerId, BillToCustomer, SalespersonId, DueDate, CityId, Currency) SELECT * FROM #tempTable 
 
-	--DROP TABLE #tempTable
     CLOSE sales_cur
-    DEALLOCATE Sales_cur
+    DEALLOCATE sales_cur
+    SET IDENTITY_INSERT Sales.SalesOrderHeader OFF
 END
 GO
 
