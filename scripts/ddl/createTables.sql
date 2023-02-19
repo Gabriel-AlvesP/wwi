@@ -168,29 +168,25 @@ CREATE TABLE Sales.CurrencyRate (
     PRIMARY KEY (FromCurrency, ToCurrency)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Shipments.Logistic (
-    LogisticId int IDENTITY NOT NULL,
+    LogisticId int IDENTITY NOT NULL PRIMARY KEY,
     Name       varchar(30) NOT NULL,
-    PRIMARY KEY (LogisticId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Shipments.Transport (
-    SaleId       int NOT NULL,
+    SaleId       int NOT NULL PRIMARY KEY,
     ShippingDate date NOT NULL,
     DeliveryDate date NOT NULL,
     LogisticId   int NOT NULL,
-    PRIMARY KEY (SaleId)
 );
 CREATE TABLE Location.Continent (
-    ContinentId tinyint IDENTITY NOT NULL,
+    ContinentId tinyint IDENTITY NOT NULL PRIMARY KEY,
     Name        varchar(25) NOT NULL UNIQUE,
-    PRIMARY KEY (ContinentId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.City (
-    CityId            int IDENTITY NOT NULL,
+    CityId            int IDENTITY NOT NULL PRIMARY KEY,
     Population        int NOT NULL,
     CityNameId        int NOT NULL,
     StateProvinceCode char(2) NOT NULL,
     CountryId         tinyint NOT NULL,
-    PRIMARY KEY (CityId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Location.PostalCode (
     Code int NOT NULL,
@@ -203,24 +199,20 @@ CREATE TABLE Location.StateProvince_Country (
         CountryId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Stock.Product (
-    ProductId int IDENTITY NOT NULL,
+    ProductId int IDENTITY NOT NULL PRIMARY KEY,
     Name      varchar(255) NOT NULL UNIQUE,
-    PRIMARY KEY (ProductId)
 ) ON WWIGlobal_fg3 ;
 CREATE TABLE Stock.[Size] (
-    SizeId int IDENTITY NOT NULL,
+    SizeId int IDENTITY NOT NULL PRIMARY KEY,
     Value  varchar(25) NOT NULL UNIQUE,
-    PRIMARY KEY (SizeId)
 );
 CREATE TABLE Stock.Brand (
-    BrandId int IDENTITY NOT NULL,
+    BrandId int IDENTITY NOT NULL PRIMARY KEY,
     Name    varchar(60) NOT NULL UNIQUE,
-    PRIMARY KEY (BrandId)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Stock.Package (
-    PackageId smallint IDENTITY NOT NULL,
+    PackageId smallint IDENTITY NOT NULL PRIMARY KEY,
     Name      varchar(25) NOT NULL UNIQUE,
-    PRIMARY KEY (PackageId)
 ) ON WWIGlobal_fg1;
 CREATE TABLE Customers.Contacts (
     Name       varchar(255) NOT NULL,
@@ -228,9 +220,8 @@ CREATE TABLE Customers.Contacts (
     CustomerId int NOT NULL
 );
 CREATE TABLE Stock.TaxRate (
-    TaxRateId int IDENTITY NOT NULL,
+    TaxRateId int IDENTITY NOT NULL PRIMARY KEY,
     Value numeric(6, 3) NOT NULL UNIQUE,
-    PRIMARY KEY (TaxRateId)
 ) ON WWIGlobal_fg1;
 ALTER TABLE dbo.ErrorLogs ADD CONSTRAINT FKErrorLogs128846 FOREIGN KEY (ErrorId) REFERENCES dbo.Error (ErrorId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder501237 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -271,4 +262,8 @@ ALTER TABLE Sales.ProductModel_Discount ADD CONSTRAINT FKProductModel_Discount1 
 ALTER TABLE Sales.ProductModel_Discount ADD CONSTRAINT FKProductModel_Discount2 FOREIGN KEY (DiscountId) REFERENCES Sales.Discount (DiscountId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder216469 FOREIGN KEY (SalespersonId) REFERENCES Sales.Salesperson (SalespersonId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Contacts ADD CONSTRAINT FKContacts573379 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
+GO
+
+-- Indexes
+CREATE NONCLUSTERED INDEX nc_citynameid_statecode_countryid ON Location.City(CityNameId, StateProvinceCode, CountryId)
 GO

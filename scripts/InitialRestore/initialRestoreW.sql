@@ -1,0 +1,7 @@
+USE master
+GO
+
+RESTORE DATABASE WWI_OldData
+FROM  DISK = N'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\WWI_DS.bak' 
+WITH  FILE = 1,  NOUNLOAD,  STATS = 5
+GO

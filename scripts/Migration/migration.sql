@@ -1,12 +1,23 @@
 -- Migration
-use WWIGlobal
+-- NOTE: This file contains the execs as well
+use WWI_OldData
+GO
+IF (SELECT OBJECTPROPERTY(OBJECT_ID(N'City'),'TableHasPrimaryKey')) = 0 
+AND (SELECT OBJECTPROPERTY(OBJECT_ID(N'Employee'),'TableHasPrimaryKey')) = 0
+AND (SELECT OBJECTPROPERTY(OBJECT_ID(N'Stock Item'),'TableHasPrimaryKey')) = 0
+BEGIN
+ALTER TABLE City ADD CONSTRAINT PK_OldData_City PRIMARY KEY([City Key])
+ALTER TABLE Employee ADD CONSTRAINT PK_OldData_Employee PRIMARY KEY([Employee Key])
+ALTER TABLE [Stock Item] ADD CONSTRAINT PK_OldData_StockItem PRIMARY KEY([Stock Item Key])
+END
 GO
 
+use WWIGlobal
+GO
 SET ANSI_NULLS OFF;
 GO
 SET NOCOUNT ON;
 GO
-
 CREATE OR ALTER PROCEDURE sp_import_continents
 AS
 BEGIN
@@ -966,11 +977,11 @@ AS
 END
 GO
 
-CREATE OR ALTER PROCEDURE sp_import_salesOrderHeader
+CREATE OR ALTER PROCEDURE sp_import_salesOH
 AS
 BEGIN
     SET IDENTITY_INSERT Sales.SalesOrderHeader ON
-    DECLARE sales_cur CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale
+    DECLARE salesoh_cur CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale 
 
     DECLARE 
     @invoiceID int,
@@ -981,34 +992,35 @@ BEGIN
     @oldCityId int, @cityName varchar(50), @state varchar(50),
     @cityId int, @cityNameId int, @stateId char(2)
 
-    OPEN sales_cur
-    FETCH NEXT FROM sales_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
+    OPEN salesoh_cur
+    FETCH NEXT FROM salesoh_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-	    -- cityId
-	    SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId
-	    SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
-	    SELECT @stateId = Code from Location.StateProvince where Name = @state
-	    SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId
-	
-	    -- salespersonId
-	    select @salespersonId = EmployeeId from CompanyResources.Employee where CONCAT_WS( ' ', FirstName, LastName) = (select Employee from WWI_OldData.dbo.Employee where [Employee Key] = @salespersonId) collate DATABASE_DEFAULT
-	
-	    -- BillTo
-	    select @billToCustomer = CustomerId from Customers.Customer where BuyingGroupId = (select BuyingGroupId from Customers.Customer where CustomerId = @customerId) and IsHeadOffice = 1
 
         IF NOT EXISTS (SELECT SaleId from Sales.SalesOrderHeader where SaleId = @invoiceID)
         BEGIN 
+			-- cityId
+			SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId --
+			SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
+			SELECT @stateId = Code from Location.StateProvince where Name = @state
+			SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId
+	
+			-- salespersonId
+			select @salespersonId = EmployeeId from CompanyResources.Employee where CONCAT_WS( ' ', FirstName, LastName) = (select Employee from WWI_OldData.dbo.Employee where [Employee Key] = @salespersonId) collate DATABASE_DEFAULT
+	
+			-- BillTo
+			select @billToCustomer = CustomerId from Customers.Customer where BuyingGroupId = (select BuyingGroupId from Customers.Customer where CustomerId = @customerId) and IsHeadOffice = 1
+
 	        INSERT INTO Sales.SalesOrderHeader(saleId, CustomerId, SalespersonId, BillToCustomer, DueDate, CityId, Currency)
             VALUES(@invoiceID, @customerId, @salespersonId, @billToCustomer, @dueDate, @cityId, 'EUR')
 	    END
 
-        FETCH NEXT FROM sales_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
+        FETCH NEXT FROM salesoh_cur INTO  @invoiceId, @oldCityId, @customerId, @dueDate, @salespersonId
     END
 
-    CLOSE sales_cur
-    DEALLOCATE sales_cur
+    CLOSE salesoh_cur
+    DEALLOCATE salesoh_cur
     SET IDENTITY_INSERT Sales.SalesOrderHeader OFF
 END
 GO
@@ -1020,13 +1032,19 @@ BEGIN
 
     DECLARE 
     @saleId int, -- wwi invoice id
-    @customerId int, -- used to identify the old transactions with repeated key
- -- stock item key (get the name of the product and search it in the new database, in case it has a model search for the model)
-    @stockItemId int, @stockItemName varchar(100), @stockItemModel varchar(100),
+    @customerId int,
+    @stockItemId int, @stockItemName varchar(100),
     @productId int, @productModelId int, @productModel varchar(100),
     @quantity smallint,
     @unitPrice money,
-    @taxRate numeric(5,3), @taxRateId int
+    @taxRate numeric(6,3), @taxRateId int,
+    @brandId int, @brand varchar(100),
+    @sizeId int, @size varchar(50), @barcode bigint,
+    @weight numeric(8,3),
+    @isChiller bit,
+    @leadTimeDays tinyint,
+    @packageQuantity int, 
+    @productTaxRate numeric(6,3), @productTaxRateId int
 
     OPEN sales_cur
     FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate
@@ -1036,46 +1054,81 @@ BEGIN
         -- Product Handling
 
         -- Get product name
-        select @stockItemName = [Stock Item] from WWI_OldData.dbo.[Stock Item] where [Stock Item Key] = @stockItemId
+        select @stockItemName = [Stock Item], @brand = Brand, @size = size, @productTaxRate = [Tax Rate], @weight = [Typical Weight Per Unit], @isChiller = [Is Chiller Stock], @leadTimeDays = [Lead Time Days], @packageQuantity = [Quantity Per Outer] from WWI_OldData.dbo.[Stock Item] where [Stock Item Key] = @stockItemId
+
         IF @stockItemName COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
         BEGIN
             -- Handle products without model
-            SET @productModel = null
+            SET @productModel = ''
 
             IF @stockItemName COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
             BEGIN 
-            SET @stockItemName = substring(@stockItemName, 1, charindex('(', @stockItemName)-2)
+            SET @stockItemName = trim(substring(@stockItemName, 1, charindex('(', @stockItemName)-2))
             END
 
             IF @stockItemName like '%[0-9][gm]' or @stockItemName like '%[1-9]mm'
             BEGIN
-	            SET @stockItemName = SUBSTRING(@stockItemName, 1,  len(@stockItemName) - charindex(' ', reverse(@stockItemName)))
+	            SET @stockItemName = trim(SUBSTRING(@stockItemName, 1,  len(@stockItemName) - charindex(' ', reverse(@stockItemName))))
             END
         END
         ELSE
         BEGIN
             -- Handle products with model
-            SET @productModel = substring(@stockItemName, charindex('-', @stockItemName)+2, len(@stockItemName)) 
-            SET @stockItemName = substring(@stockItemName, 1, charindex('-', @stockItemName)-1)
+            SET @productModel = trim(substring(@stockItemName, charindex('-', @stockItemName)+2, len(@stockItemName)))
+            SET @stockItemName = (substring(@stockItemName, 1, charindex('-', @stockItemName)-1))
 
             IF @productModel like '(%'
             BEGIN
 		        -- (hip hip array)
-                set @productModel = substring(@productModel, 1, charindex(')', @productModel))
+                set @productModel = trim(substring(@productModel, 1, charindex(')', @productModel)))
             END 
 
             IF @productModel like '%(%'
             BEGIN
 			    -- remove color
-			   set @productModel = substring(@productModel, 1, charindex('(', @productModel)-1)
+			   set @productModel = (substring(@productModel, 1, charindex('(', @productModel)-1))
             END
         END
 
-        select @productModelId = ProductModelId from Stock.ProductModel where productId = (select productId from Stock.Product where Name = @stockItemName) and Model = @productModel
+        SELECT @productId = ProductId from Stock.Product where Name = @stockItemName
+        SELECT @brandId = BrandId from Stock.Brand where Name = @brand
+        SELECT @sizeId = sizeId from Stock.[Size] where Value = @size
+        SELECT @productTaxRateId = TaxRateId from Stock.TaxRate where Value = cast(@productTaxRate as numeric(6,3))
 
-        IF EXISTS (SELECT saleId from Sales.SalesorderDetails where SaleId = @saleId and ProductId = @productModelId)
+        IF EXISTS (select ProductModelId from Stock.ProductModel 
+        where 
+            ProductId = @productId 
+            and model = @productModel 
+            and sizeId = @sizeId 
+            and TaxRateId = @productTaxRateId 
+            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+            and BrandId = @brandId 
+            and Weight = cast(@weight as numeric(8,3)) 
+            and IsChiller = cast(@isChiller as bit) 
+            and LeadTimeDays = cast(@leadTimeDays as tinyint)
+            and PackageQuantity = cast(@packageQuantity as int)
+        )
         BEGIN
-            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, @quantity, @unitPrice, @taxRate)
+	        SELECT @productModelId = ProductModelId from Stock.ProductModel 
+	        WHERE 
+	            ProductId = @productId 
+	            and model = @productModel 
+	            and sizeId = @sizeId 
+	            and TaxRateId = @productTaxRateId 
+	            and Barcode = cast(@barcode as bigint) 
+	            and BrandId = @brandId 
+	            and Weight = cast(@weight as numeric(8,3)) 
+	            and IsChiller = cast(@isChiller as bit) 
+	            and LeadTimeDays = cast(@leadTimeDays as tinyint)
+	            and PackageQuantity = cast(@packageQuantity as int)
+	
+	        IF NOT EXISTS (
+	            SELECT saleId from Sales.SalesorderDetails where SaleId = @saleId and ProductId = @productModelId
+	            )
+	        BEGIN
+                select @taxRateId = taxRateId from Stock.TaxRate where Value = @taxRate
+	            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, @quantity, @unitPrice, @taxRateId)
+	        END
         END
 
         FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate
@@ -1119,9 +1172,6 @@ END
 GO
 --TODO: Populate SystemUser 
 
--- exec migration
-SET NOCOUNT ON;
-GO
 exec sp_populate_currency;
 GO
 exec sp_populate_currencyRate;
@@ -1164,10 +1214,20 @@ exec sp_import_product;
 GO
 exec sp_import_productM;
 GO
-exec sp_import_salesOrderHeader;
+exec sp_import_salesOH;
 GO
 exec sp_import_salesOrderDetails;
 GO
 
 SET NOCOUNT OFF;
 GO
+SET ANSI_NULLS ON;
+GO
+--SET STATISTICS TIME ON
+--GO
+--SET STATISTICS IO ON
+--GO
+--SET STATISTICS IO OFF
+--GO
+--SET STATISTICS TIME OFF
+--GO

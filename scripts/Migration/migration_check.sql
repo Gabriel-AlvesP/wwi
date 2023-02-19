@@ -55,3 +55,7 @@ select * from Location.StateProvince_Country
 -- Number of sales
 select count(distinct [WWI Invoice Id]) from WWI_OldData.dbo.Sale 
 select count(*) from Sales.SalesOrderHeader
+GO
+
+select * from Sales.SalesOrderDetails
+select * from Stock.ProductModel

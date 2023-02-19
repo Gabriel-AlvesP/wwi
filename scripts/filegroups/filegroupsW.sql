@@ -1,5 +1,6 @@
 use master
 GO
+--DROP DATABASE WWIGlobal
 
 create database WWIGlobal
 on primary (
@@ -51,9 +52,9 @@ filegroup WWIGlobal_fg3 (
 log on (
     name = 'wwiglobal_log',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwiglobal_log.ldf',
-    SIZE = 20MB,
-    MAXSIZE = 60MB,
-    FILEGROWTH = 20MB
+    SIZE = 60MB,
+    MAXSIZE = 120MB,
+    FILEGROWTH = 60MB
 )
 GO
 

@@ -157,10 +157,7 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## Known Issues
 
-- update create/drop tables
-
-   1. FK's
-
+- barcode bigint should be a varchar
 
 ## TODO
 
