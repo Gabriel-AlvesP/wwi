@@ -159,6 +159,14 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 - barcode bigint should be a varchar
 
+- SalesOrderDetails migration
+
+- Address number > customer number
+
+- Actual price to calculate the profit
+
+- SalesOrderDetails table has 169117 and should be 170155 or 170
+
 ## TODO
 
 - [x] ER

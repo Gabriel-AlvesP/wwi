@@ -9,6 +9,7 @@ BEGIN
 ALTER TABLE City ADD CONSTRAINT PK_OldData_City PRIMARY KEY([City Key])
 ALTER TABLE Employee ADD CONSTRAINT PK_OldData_Employee PRIMARY KEY([Employee Key])
 ALTER TABLE [Stock Item] ADD CONSTRAINT PK_OldData_StockItem PRIMARY KEY([Stock Item Key])
+CREATE NONCLUSTERED INDEX nc_invoiceId_customerId ON WWI_OldData.dbo.Sale([WWI Invoice ID]) include ( [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate])
 END
 GO
 
@@ -634,7 +635,7 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        IF NOT EXISTS (SELECT sizeId from Stock.Size where value = @size) and @size <> N'N/A'
+        IF NOT EXISTS (SELECT sizeId from Stock.Size where value = @size) --and @size <> N'N/A'
         BEGIN
             INSERT INTO Stock.Size(Value) VALUES(@size)
         END
@@ -827,9 +828,9 @@ AS
 	[Quantity Per Outer],
 	[Is Chiller Stock],
 	case when Barcode = N'N/A' THEN
-        0 
+        '' 
     ELSE
-        cast(barcode as bigint)
+        cast(barcode as varchar(25))
     END,
 	[Tax Rate],
 	[Unit Price],
@@ -864,7 +865,7 @@ AS
     @leadTimeDays tinyint,
     @packageQuantity int,
     @isChiller bit,
-    @barcode bigint,
+    @barcode varchar(25),
     @taxRate numeric(6,3), @taxRateId int,
     @unitCost money, 
     @recommendedRetail money,
@@ -916,7 +917,7 @@ AS
             and sizeId = @sizeId 
             and TaxRateId = @taxRateId 
             and StandardUnitCost = cast(@unitCost as money) 
-            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+            and Barcode  = @barcode 
             and BrandId = @brandId 
             and RecommendedRetailPrice = cast(@recommendedRetail as money) 
             and Weight = cast(@weight as numeric(8,3)) 
@@ -925,7 +926,7 @@ AS
             and PackageQuantity = cast(@packageQuantity as int))
         BEGIN
             INSERT INTO Stock.ProductModel(ProductId, Model, BrandId, SizeId, Barcode, StandardUnitCost, TaxRateId, RecommendedRetailPrice, Weight, IsChiller, LeadTimeDays, PackageQuantity, BuyingPackageId, SellingPackageId)
-            VALUES (@productId, @model, @brandId, @sizeId, cast(@barcode as bigint), cast(@unitCost as money), @taxRateId, cast(@recommendedRetail as money), cast(@weight as numeric(8,3)), cast(@isChiller as bit), cast(@leadTimeDays as tinyint), cast(@packageQuantity as int), @buyingPackageId, @sellingPackageId)
+            VALUES (@productId, @model, @brandId, @sizeId, @barcode, cast(@unitCost as money), @taxRateId, cast(@recommendedRetail as money), cast(@weight as numeric(8,3)), cast(@isChiller as bit), cast(@leadTimeDays as tinyint), cast(@packageQuantity as int), @buyingPackageId, @sellingPackageId)
 
             INSERT INTO Stock.Color_Product(ColorId, ProductModelId) VALUES(@colorId, SCOPE_IDENTITY())
         END
@@ -940,13 +941,15 @@ AS
 	            and sizeId = @sizeId 
 	            and TaxRateId = @taxRateId 
 	            and StandardUnitCost = cast(@unitCost as money) 
-	            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+	            and Barcode  = @barcode  
 	            and BrandId = @brandId 
 	            and RecommendedRetailPrice = cast(@recommendedRetail as money) 
 	            and Weight = cast(@weight as numeric(8,3)) 
 	            and IsChiller = cast(@isChiller as bit) 
 	            and LeadTimeDays = cast(@leadTimeDays as tinyint)
 	            and PackageQuantity = cast(@packageQuantity as int)
+
+
 
             IF NOT EXISTS (SELECT colorId from Stock.Color_Product where colorId = @colorId and ProductModelId = @productModelId)
             BEGIN
@@ -981,7 +984,7 @@ CREATE OR ALTER PROCEDURE sp_import_salesOH
 AS
 BEGIN
     SET IDENTITY_INSERT Sales.SalesOrderHeader ON
-    DECLARE salesoh_cur CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale 
+    DECLARE salesoh_cur CURSOR FOR select [WWI Invoice ID], [City Key], [Customer Key], [Invoice Date Key], [Salesperson Key] from WWI_OldData.dbo.Sale
 
     DECLARE 
     @invoiceID int,
@@ -1004,7 +1007,7 @@ BEGIN
 			SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId --
 			SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
 			SELECT @stateId = Code from Location.StateProvince where Name = @state
-			SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId
+			SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId and countryId = 1
 	
 			-- salespersonId
 			select @salespersonId = EmployeeId from CompanyResources.Employee where CONCAT_WS( ' ', FirstName, LastName) = (select Employee from WWI_OldData.dbo.Employee where [Employee Key] = @salespersonId) collate DATABASE_DEFAULT
@@ -1025,10 +1028,12 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE sp_import_salesOrderDetails
+CREATE OR ALTER PROCEDURE sp_import_salesOD
 AS
 BEGIN
-    DECLARE sales_cur CURSOR FOR select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate]  from WWI_OldData.dbo.Sale 
+    DECLARE sales_cur CURSOR FOR 
+    select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate]  from WWI_OldData.dbo.Sale s right join Sales.SalesOrderHeader soh on s.[WWI Invoice ID] = soh.SaleId and s.[Customer Key] = soh.CustomerId order by [WWI Invoice ID]
+    --select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate]  from WWI_OldData.dbo.Sale order by [WWI Invoice ID], [Customer Key]
 
     DECLARE 
     @saleId int, -- wwi invoice id
@@ -1039,12 +1044,15 @@ BEGIN
     @unitPrice money,
     @taxRate numeric(6,3), @taxRateId int,
     @brandId int, @brand varchar(100),
-    @sizeId int, @size varchar(50), @barcode bigint,
+    @sizeId int, @size varchar(50), @barcode varchar(25),
     @weight numeric(8,3),
     @isChiller bit,
     @leadTimeDays tinyint,
     @packageQuantity int, 
-    @productTaxRate numeric(6,3), @productTaxRateId int
+    @productTaxRate numeric(6,3), @productTaxRateId int,
+    @sellingPackage varchar(100), @buyingPackage varchar(100),
+    @sellingPackageId smallint, @buyingPackageId smallint,
+    @unitCost money, @recommendedRetail money
 
     OPEN sales_cur
     FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate
@@ -1054,7 +1062,7 @@ BEGIN
         -- Product Handling
 
         -- Get product name
-        select @stockItemName = [Stock Item], @brand = Brand, @size = size, @productTaxRate = [Tax Rate], @weight = [Typical Weight Per Unit], @isChiller = [Is Chiller Stock], @leadTimeDays = [Lead Time Days], @packageQuantity = [Quantity Per Outer] from WWI_OldData.dbo.[Stock Item] where [Stock Item Key] = @stockItemId
+        select @stockItemName = [Stock Item], @brand = Brand, @size = size, @productTaxRate = cast([Tax Rate] as numeric(6,3)), @weight = cast([Typical Weight Per Unit] as numeric(8,3)), @isChiller = cast([Is Chiller Stock] as bit), @leadTimeDays = cast([Lead Time Days] as tinyint), @packageQuantity = cast([Quantity Per Outer] as int), @barcode = cast(Barcode as varchar(25)), @sellingPackage = [Selling Package], @buyingPackage = [Buying Package], @unitCost = cast([Unit Price] as money), @recommendedRetail = [Recommended Retail Price] from WWI_OldData.dbo.[Stock Item] where [Stock Item Key] = @stockItemId
 
         IF @stockItemName COLLATE Latin1_General_CS_AS not like '%[ABCDEFGHIJKLMNOPKRSTUVXWYZ]% -%'
         BEGIN
@@ -1063,71 +1071,96 @@ BEGIN
 
             IF @stockItemName COLLATE Latin1_General_CS_AS like '%([ABCDEFGHIJKLMNOPKRSTUVXWYZ]%'
             BEGIN 
-            SET @stockItemName = trim(substring(@stockItemName, 1, charindex('(', @stockItemName)-2))
+                SET @stockItemName = trim(substring(@stockItemName, 1, charindex('(', @stockItemName)-2))
             END
-
-            IF @stockItemName like '%[0-9][gm]' or @stockItemName like '%[1-9]mm'
+            ELSE
             BEGIN
-	            SET @stockItemName = trim(SUBSTRING(@stockItemName, 1,  len(@stockItemName) - charindex(' ', reverse(@stockItemName))))
+	            IF @stockItemName like '%[0-9][gm]' or @stockItemName like '%[1-9]mm'
+	            BEGIN
+		            SET @stockItemName = trim(SUBSTRING(@stockItemName, 1,  len(@stockItemName) - charindex(' ', reverse(@stockItemName))))
+	            END
             END
         END
         ELSE
         BEGIN
             -- Handle products with model
-            SET @productModel = trim(substring(@stockItemName, charindex('-', @stockItemName)+2, len(@stockItemName)))
-            SET @stockItemName = (substring(@stockItemName, 1, charindex('-', @stockItemName)-1))
+            SET @productModel = substring(@stockItemName, charindex('-', @stockItemName)+2, len(@stockItemName))
+
+            SET @stockItemName = trim(substring(@stockItemName, 1, charindex('-', @stockItemName)-2))
 
             IF @productModel like '(%'
             BEGIN
 		        -- (hip hip array)
-                set @productModel = trim(substring(@productModel, 1, charindex(')', @productModel)))
+                SET @productModel = trim(substring(@productModel, 1, charindex(')', @productModel)))
             END 
-
-            IF @productModel like '%(%'
-            BEGIN
-			    -- remove color
-			   set @productModel = (substring(@productModel, 1, charindex('(', @productModel)-1))
+            ELSE 
+            BEGIN 
+	            IF @productModel like '%(%'
+	            BEGIN
+				    -- remove color
+				   SET @productModel = trim(substring(@productModel, 1, charindex('(', @productModel)-1))
+	            END
+	            ELSE
+	            BEGIN
+	                SET @productModel = trim(@productModel)
+	            END
             END
+        END
+
+        IF @barcode = N'N/A'
+        BEGIN
+            SET @barcode = ''
         END
 
         SELECT @productId = ProductId from Stock.Product where Name = @stockItemName
         SELECT @brandId = BrandId from Stock.Brand where Name = @brand
         SELECT @sizeId = sizeId from Stock.[Size] where Value = @size
         SELECT @productTaxRateId = TaxRateId from Stock.TaxRate where Value = cast(@productTaxRate as numeric(6,3))
+        SELECT @sellingPackageId = packageId from Stock.Package where Name = @sellingPackage
+        SELECT @buyingPackageId = packageId from Stock.Package where Name = @buyingPackage
 
-        IF EXISTS (select ProductModelId from Stock.ProductModel 
-        where 
+        IF EXISTS
+        (SELECT ProductModelId from Stock.ProductModel 
+        WHERE 
             ProductId = @productId 
             and model = @productModel 
+            and @sellingPackageId = SellingPackageId 
+            and @buyingPackageId = BuyingPackageId 
             and sizeId = @sizeId 
             and TaxRateId = @productTaxRateId 
-            and cast(Barcode as bigint) = cast(@barcode as bigint) 
+            and StandardUnitCost = cast(@unitCost as money) 
+            and Barcode = @barcode
             and BrandId = @brandId 
+	        and RecommendedRetailPrice = cast(@recommendedRetail as money) 
             and Weight = cast(@weight as numeric(8,3)) 
             and IsChiller = cast(@isChiller as bit) 
             and LeadTimeDays = cast(@leadTimeDays as tinyint)
             and PackageQuantity = cast(@packageQuantity as int)
         )
-        BEGIN
+	    BEGIN
 	        SELECT @productModelId = ProductModelId from Stock.ProductModel 
 	        WHERE 
 	            ProductId = @productId 
 	            and model = @productModel 
+	            and @sellingPackageId = SellingPackageId 
+	            and @buyingPackageId = BuyingPackageId 
 	            and sizeId = @sizeId 
 	            and TaxRateId = @productTaxRateId 
-	            and Barcode = cast(@barcode as bigint) 
+	            and StandardUnitCost = cast(@unitCost as money) 
+	            and Barcode = @barcode
 	            and BrandId = @brandId 
+		        and RecommendedRetailPrice = cast(@recommendedRetail as money) 
 	            and Weight = cast(@weight as numeric(8,3)) 
 	            and IsChiller = cast(@isChiller as bit) 
 	            and LeadTimeDays = cast(@leadTimeDays as tinyint)
 	            and PackageQuantity = cast(@packageQuantity as int)
 	
 	        IF NOT EXISTS (
-	            SELECT saleId from Sales.SalesorderDetails where SaleId = @saleId and ProductId = @productModelId
-	            )
+	            SELECT saleId from Sales.SalesOrderDetails where SaleId = @saleId and ProductId = @productModelId
+	        )
 	        BEGIN
-                select @taxRateId = taxRateId from Stock.TaxRate where Value = @taxRate
-	            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, @quantity, @unitPrice, @taxRateId)
+	            SELECT @taxRateId = taxRateId from Stock.TaxRate where Value = @taxRate
+	            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, @quantity, cast(@unitPrice as money), @taxRateId)
 	        END
         END
 
@@ -1216,7 +1249,7 @@ exec sp_import_productM;
 GO
 exec sp_import_salesOH;
 GO
-exec sp_import_salesOrderDetails;
+exec sp_import_salesOD;
 GO
 
 SET NOCOUNT OFF;

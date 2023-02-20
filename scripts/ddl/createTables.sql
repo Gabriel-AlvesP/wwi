@@ -56,7 +56,7 @@ CREATE TABLE Stock.ProductModel (
     Model                  varchar(255) NULL,
     BrandId                int NULL,
     SizeId                 int NULL, 
-    Barcode                bigint NULL,
+    Barcode                varchar(25) NOT NULL,
     StandardUnitCost       money NOT NULL,
     TaxRateId              int NOT NULL,
     RecommendedRetailPrice money NOT NULL,
@@ -265,5 +265,17 @@ ALTER TABLE Customers.Contacts ADD CONSTRAINT FKContacts573379 FOREIGN KEY (Cust
 GO
 
 -- Indexes
-CREATE NONCLUSTERED INDEX nc_citynameid_statecode_countryid ON Location.City(CityNameId, StateProvinceCode, CountryId)
+-- Location
+-- City
+CREATE NONCLUSTERED INDEX nc_citynameid_statecode_countryid ON Location.City(CountryId, StateProvinceCode, CityNameId)
+GO
+-- Sales
+-- SalesOrderheader
+CREATE NONCLUSTERED INDEX nc_salesOrderHeader_salespersonId ON Sales.SalesOrderheader(SalespersonId)
+CREATE NONCLUSTERED INDEX nc_salesOrderHeader_dueDate ON Sales.SalesOrderheader(DueDate)
+CREATE NONCLUSTERED INDEX nc_salesOrderHeader_cityId ON Sales.SalesOrderheader(CityId)
+GO
+-- Customers
+-- HeadOffice Customer
+CREATE NONCLUSTERED INDEX nc_Customer_headOffice ON Customers.Customer(BuyingGroupId, IsHeadOffice)
 GO
