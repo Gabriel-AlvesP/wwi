@@ -35,12 +35,12 @@ CREATE TABLE Sales.Discount (
 );
 CREATE TABLE dbo.ErrorLogs (
     ErrorLogId int IDENTITY NOT NULL PRIMARY KEY,
-    ErrorId    smallint NOT NULL,
+    ErrorId    int NOT NULL,
     UserName   varchar(255) NOT NULL,
     [Date]     datetime2(2) NOT NULL DEFAULT SYSDATETIME(),
 );
 CREATE TABLE dbo.Error (
-    ErrorId      smallint IDENTITY NOT NULL PRIMARY KEY,
+    ErrorId      int NOT NULL PRIMARY KEY,
     ErrorMessage varchar(255) NOT NULL,
 ) ON WWIGlobal_fg1;
 CREATE TABLE CompanyResources.Employee (

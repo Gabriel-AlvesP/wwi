@@ -169,8 +169,10 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## TODO
 
-- [x] ER
-- [x] DDL (data definition language) files (create + drop)
-- [x] Filegroups
-- [ ] Migration
+- [ ] Taxa de crescimento e dimensao maxima
 - [ ] Migration check
+- [ ] Mudar o preco do produto em Product_Sale para `profit + Total Excluding` (preco de venda)
+- [ ] inserir o preco mais atual na table do produto
+- [ ] geradores
+- [ ] 2.1.2 Programacao
+- [ ] monitorizacao 

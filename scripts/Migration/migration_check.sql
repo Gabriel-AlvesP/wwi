@@ -2,6 +2,8 @@
 use WWIGlobal
 GO
 
+-- Inicio requisitos min --
+
 -- Number of Customers :)
 select * from WWI_OldData.dbo.Customer
 select count(Customer) from WWI_OldData.dbo.Customer;
@@ -13,6 +15,18 @@ GO
 -- Customers per Category :)
 select Category, count(*) from WWI_OldData.dbo.Customer group by Category
 select CategoryId, count(*) from Customers.Customer group by categoryId
+-----------------------------------------------
+GO
+
+-- Employee sales (sales per employee)
+-----------------------------------------------
+GO
+
+-- Value in sales per year and stock item
+-----------------------------------------------
+GO
+
+-- Value in sales per year and city
 -----------------------------------------------
 GO
 
@@ -152,3 +166,5 @@ select sod.SaleId, soh.CustomerId, sod.ProductId, sod.Quantity, sod.ListedUnitPr
 -----------------------------------------------
 
 select * from Stock.ProductModel
+select * from WWI_OldData.dbo.Sale
+select * from WWI_OldData.dbo.[Stock Item]
