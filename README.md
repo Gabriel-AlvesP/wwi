@@ -174,5 +174,12 @@ Postal code is in a dedicated table because there are multiple cities with the s
 - [ ] Mudar o preco do produto em Product_Sale para `profit + Total Excluding` (preco de venda)
 - [ ] inserir o preco mais atual na table do produto
 - [ ] geradores
-- [ ] 2.1.2 Programacao
+   - [x] insert
+   - [ ] update
+   - [ ] delete
+- [ ] 2.1.2 Programacao!!!
+   - views
+   - indexes
+   - functions
+- json to sql server
 - [ ] monitorizacao 

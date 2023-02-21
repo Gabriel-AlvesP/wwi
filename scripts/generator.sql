@@ -114,9 +114,9 @@ BEGIN
 	    DECLARE gen_cur CURSOR FOR 
 	    SELECT c.column_id, c.name, TYPE_NAME(c.user_type_id), c.max_length, c.[precision], c.is_nullable
 	    FROM sys.tables o
-	    INNER JOIN sys.columns as c on c.object_id = o.object_id
+	    INNER JOIN sys.columns c on c.object_id = o.object_id
 	    WHERE LOWER(o.name) = @tableName
-	
+
 	    OPEN gen_cur
 	    FETCH NEXT FROM gen_cur INTO @col_id, @col_name, @col_type, @col_len, @col_precision, @col_null
 
