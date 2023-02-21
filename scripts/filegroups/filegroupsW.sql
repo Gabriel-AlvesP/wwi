@@ -7,7 +7,7 @@ on primary (
     name = 'wwiglobal_primary', -- system objects
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwiglobal_primary.mdf',
     size = 10MB,
-    maxsize = 20MB,
+    maxsize = 30MB,
     filegrowth = 10MB
 ),
 
@@ -26,9 +26,9 @@ filegroup WWIGlobal_fg1 (
 filegroup WWIGlobal_fg2 (
     name = 'wwiglobal_fg2',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwiglobal_fg2.ndf',
-    size = 10MB,
-    maxsize = 50MB,
-    filegrowth = 20MB
+    size = 40MB,
+    maxsize = 120MB,
+    filegrowth = 40MB
 ),
 
 -- Features: +Read, +Write
