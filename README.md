@@ -157,25 +157,17 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## Known Issues
 
-- barcode bigint should be a varchar
-
 - SalesOrderDetails migration
 
 - Address number > customer number
 
-- Actual price to calculate the profit
-
-- SalesOrderDetails table has 169117 and should be 170155 or 170
+- SalesOrderDetails table has 169117 and should be 170155
 
 ## TODO
 
 - [ ] Taxa de crescimento e dimensao maxima
 
 - [ ] Migration check
-
-- [ ] Mudar o preco do produto em Product_Sale para `profit + Total Excluding` (preco de venda)
-
-- [ ] inserir o preco mais atual na table do produto
 
 - [ ] 2.1.2 Programacao!!!
    1. views

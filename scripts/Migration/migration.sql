@@ -1032,7 +1032,7 @@ CREATE OR ALTER PROCEDURE sp_import_salesOD
 AS
 BEGIN
     DECLARE sales_cur CURSOR FOR 
-    select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate]  from WWI_OldData.dbo.Sale s right join Sales.SalesOrderHeader soh on s.[WWI Invoice ID] = soh.SaleId and s.[Customer Key] = soh.CustomerId order by [WWI Invoice ID]
+    select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate], Profit from WWI_OldData.dbo.Sale s right join Sales.SalesOrderHeader soh on s.[WWI Invoice ID] = soh.SaleId and s.[Customer Key] = soh.CustomerId order by [WWI Invoice ID]
     --select [WWI Invoice ID], [Customer Key], [Stock Item Key], Quantity, [Unit Price], [Tax Rate]  from WWI_OldData.dbo.Sale order by [WWI Invoice ID], [Customer Key]
 
     DECLARE 
@@ -1041,7 +1041,7 @@ BEGIN
     @stockItemId int, @stockItemName varchar(100),
     @productId int, @productModelId int, @productModel varchar(100),
     @quantity smallint,
-    @unitPrice money,
+    @unitPrice money, @listedUnitPrice money,
     @taxRate numeric(6,3), @taxRateId int,
     @brandId int, @brand varchar(100),
     @sizeId int, @size varchar(50), @barcode varchar(25),
@@ -1052,10 +1052,10 @@ BEGIN
     @productTaxRate numeric(6,3), @productTaxRateId int,
     @sellingPackage varchar(100), @buyingPackage varchar(100),
     @sellingPackageId smallint, @buyingPackageId smallint,
-    @unitCost money, @recommendedRetail money
+    @unitCost money, @recommendedRetail money, @profit money
 
     OPEN sales_cur
-    FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate
+    FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate, @profit
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
@@ -1160,11 +1160,16 @@ BEGIN
 	        )
 	        BEGIN
 	            SELECT @taxRateId = taxRateId from Stock.TaxRate where Value = @taxRate
-	            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, @quantity, cast(@unitPrice as money), @taxRateId)
+                set @listedUnitPrice = cast(@unitPrice as money) + (cast(@profit as money)/cast(@quantity as money))
+
+	            INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId)  VALUES(@productModelId, @saleId, cast(@quantity as int), cast(@listedUnitPrice as money), @taxRateId)
+
+                UPDATE Stock.ProductModel SET CurrentRetailPrice = cast(@listedUnitPrice as money) where ProductModelId = @productModelId
+
 	        END
         END
 
-        FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate
+        FETCH NEXT FROM sales_cur INTO  @saleId, @customerId, @stockItemId, @quantity, @unitPrice, @taxRate, @profit
     END
     CLOSE sales_cur
     DEALLOCATE sales_cur
