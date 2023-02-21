@@ -170,16 +170,18 @@ Postal code is in a dedicated table because there are multiple cities with the s
 ## TODO
 
 - [ ] Taxa de crescimento e dimensao maxima
+
 - [ ] Migration check
+
 - [ ] Mudar o preco do produto em Product_Sale para `profit + Total Excluding` (preco de venda)
+
 - [ ] inserir o preco mais atual na table do produto
-- [ ] geradores
-   - [x] insert
-   - [ ] update
-   - [ ] delete
+
 - [ ] 2.1.2 Programacao!!!
-   - views
-   - indexes
-   - functions
+   1. views
+   2. indexes
+   3. functions
+
 - json to sql server
-- [ ] monitorizacao 
+
+- [ ] monitorizacao
