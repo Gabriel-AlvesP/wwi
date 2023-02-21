@@ -15,7 +15,9 @@ BEGIN
 
         (51003, N'Table `%s` does not exist. Check the database table for more info.'),
 
-        (51004, N'FK `%s` does not exist in `%s` table')
+        (51004, N'FK `%s` does not exist in `%s` table'),
+
+        (51005, N'PK `%s` does not exist in `%s` table')
     END
 END
 GO
@@ -91,7 +93,20 @@ INNER JOIN sys.columns c_child
     AND fkc.referenced_column_id = c_child.column_id
 GO
 
-CREATE OR ALTER PROCEDURE fk_validation
+--drop view all_pk_cols
+--GO
+CREATE VIEW all_pk_cols 
+AS
+SELECT s.name as schemaName, t.name as tableName, c.name as columnName --, ic.index_column_id as keyColumnNum
+FROM sys.index_columns ic
+    inner join sys.columns c on ic.object_id = c.object_id and ic.column_id = c.column_id
+    inner join sys.indexes i on ic.object_id = i.object_id and ic.index_id = i.index_id
+    inner join sys.tables t on i.object_id = t.object_id
+    inner join sys.schemas s on t.schema_id = s.schema_id
+    where i.is_primary_key= 1;
+GO
+
+CREATE OR ALTER PROCEDURE sp_validate_fk
     @parent_table varchar(100),
     @parent_col   varchar(100),
     @param_val    int
@@ -115,8 +130,37 @@ BEGIN
             begin
             exec sp_throw_error 51004, 1, ' , @param_val , ', ' , @ref_table , ' end')
         
-
         exec sp_executesql @sql
     END
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_validate_pk
+    @table varchar(100),
+    @col   varchar(100),
+    @param_val    int
+AS
+BEGIN
+
+    IF EXISTS (select tablename
+        from all_pk_cols fk
+        where tablename = @table and columnname = @col
+    )
+    BEGIN
+        declare @schema varchar(100),  @sql nvarchar(255) 
+
+        select top 1 @schema = schemaname
+            from all_pk_cols pk 
+            where tablename = @table and columnname = @col
+
+        set @sql = concat('declare @count int 
+        set @count = (select count(*) from ' , @schema , '.' , @table , ' where ' , @col ,' = ' , @param_val , ') 
+            IF @count = 0
+            begin
+            exec sp_throw_error 51005, 1, ' , @param_val , ', ' , @table , ' end')
+        
+        exec sp_executesql @sql
+    END
+    
 END
 GO
