@@ -11,7 +11,7 @@ BEGIN
         (51001, N'This error is new. Please, report it to the admin.'),
 
 		(51002, N'Action `%s` does not exist.
-        The only actions available are: insert, update and delete'),
+        Actions available : insert / update / delete / all'),
 
         (51003, N'Table `%s` does not exist. Check the database table for more info.')
     END
@@ -38,10 +38,16 @@ BEGIN
             begin
                 set @msg = FORMATMESSAGE(@msg,@param1, @param2)
             end
-
-            set @msg = FORMATMESSAGE(@msg,@param1)
+            else
+            begin
+                set @msg = FORMATMESSAGE(@msg,@param1)
+            end
         END
-        
+        ELSE
+        BEGIN
+            set @msg = FORMATMESSAGE(@msg)
+        END
+         
         INSERT INTO dbo.ErrorLogs(ErrorId, Username) VALUES(@errorId, CURRENT_USER)
         ;THROW @errorId , @msg, @state 
     END
