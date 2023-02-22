@@ -1,5 +1,9 @@
 use WWIGlobal
 GO
+-- This supress success messages that are added to error logs
+--DBCC TRACEON (3226, -1);
+--DBCC TRACEOFF (3226, -1);
+GO
 CREATE SCHEMA Customers
 GO
 CREATE SCHEMA Sales
@@ -151,7 +155,7 @@ CREATE TABLE Location.Address (
 CREATE TABLE Authentication.SystemUser (
     CustomerId int NOT NULL PRIMARY KEY,
     Email      varchar(255) NOT NULL UNIQUE,
-    Password   varchar(25) NOT NULL,
+    Passwd     varbinary(32) NOT NULL,
 );
 CREATE TABLE Sales.Currency (
     Abbreviation char(3) NOT NULL PRIMARY KEY,

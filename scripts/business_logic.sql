@@ -1,0 +1,12 @@
+-- Business logic sps, triggers and udfs 
+--TODO: criar uma venda
+-- adicionar/remover produtos às vendas
+-- alterar a quantidade de produtos numa venda
+-- calcular o preço total de uma venda
+-- verificação da data de entrega de uma venda de acordo com as datas de entrega dos produtos a ela associados 
+--apenas um tipo de “Chiller Stock” a uma venda  
+--autenticação por parte dos clientes com recurso ao ‘email’ e ‘password’
+-- adicionar/atualizar/remover utilizadores
+-- recuperar a ‘password’ com recurso a um ‘token’ de verificação gerado e enviado automaticamente para o email do utilizador
+-- permitir alterar as datas de início e fim de uma promoção 
+-- verificação da data de validade de uma promoção 

@@ -169,9 +169,6 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 --------------- HOJE ----------------
 
-
-- [ ] Migration check
-
 - [ ] 2.1.2 Programacao!!!
    1. views
    2. indexes
