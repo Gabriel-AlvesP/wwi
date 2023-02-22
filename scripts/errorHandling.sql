@@ -1,27 +1,44 @@
 use WWIGlobal
 GO
 
-CREATE OR ALTER PROCEDURE sp_insert_error_messages
+CREATE OR ALTER PROCEDURE sp_insert_errorMessages
 AS
 BEGIN
     IF NOT EXISTS (select * from dbo.Error)
     BEGIN
 		INSERT INTO dbo.Error(ErrorId, ErrorMessage) 
 		VALUES
-        (51001, N'This error is new. Please, report it to the admin.'),
+        (51001, 'This error is new. Please, report it to the admin.'),
 
-		(51002, N'Action `%s` does not exist.
+		(51002, 'Action `%s` does not exist.
         Actions available : insert / update / delete / all'),
 
-        (51003, N'Table `%s` does not exist. Check the database table for more info.'),
+        (51003, 'Table `%s` does not exist. Check the database table for more info.'),
 
-        (51004, N'FK `%s` does not exist in `%s` table'),
+        (51004, 'FK `%s` does not exist in `%s` table'),
 
-        (51005, N'PK `%s` does not exist in `%s` table')
+        (51005, 'PK `%s` does not exist in `%s` table'),
+
+        (51006, 'An unexpected error occurred, for more information check the logs'),
+
+        (51007, 'The `%s` value already exists in `%s`.'),
+
+
+        -- Business Logic
+        (52001, 'A sale can only have 1 type of chiller/dry product'),
+
+        (52000, 'Customer `%s` does not exists.'),
+
+        (52101, 'Email cannot be null or empty.'),
+
+        (52102, 'This email `%s` is already in use.'),
+
+        (52103, 'Password must have at least 8 characters.')
+
     END
 END
 GO
-exec sp_insert_error_messages
+exec sp_insert_errorMessages
 GO
 
 CREATE OR ALTER PROCEDURE sp_throw_error
@@ -69,9 +86,9 @@ BEGIN
 END
 GO
 
---drop view all_fk_cols
+--drop view vw_all_fk_cols
 --GO
-CREATE VIEW all_fk_cols as 
+CREATE VIEW vw_all_fk_cols as 
 SELECT 
     t_parent.name AS ParentTableName
     , c_parent.name AS ParentColumnName
@@ -93,9 +110,9 @@ INNER JOIN sys.columns c_child
     AND fkc.referenced_column_id = c_child.column_id
 GO
 
---drop view all_pk_cols
+--drop view vw_all_pk_cols
 --GO
-CREATE VIEW all_pk_cols 
+CREATE VIEW vw_all_pk_cols 
 AS
 SELECT s.name as schemaName, t.name as tableName, c.name as columnName --, ic.index_column_id as keyColumnNum
 FROM sys.index_columns ic
@@ -106,6 +123,17 @@ FROM sys.index_columns ic
     where i.is_primary_key= 1;
 GO
 
+--drop VIEW vw_unique_cols
+-- Unique constraints
+CREATE VIEW vw_unique_cols
+as
+select cc.TABLE_NAME as tableName, CC.Column_Name as columnName
+from information_schema.table_constraints TC
+inner join information_schema.constraint_column_usage CC 
+on TC.Constraint_Name = CC.Constraint_Name
+where TC.constraint_type = 'Unique'
+GO
+
 CREATE OR ALTER PROCEDURE sp_validate_fk
     @parent_table varchar(100),
     @parent_col   varchar(100),
@@ -114,14 +142,14 @@ AS
 BEGIN
 
     IF EXISTS (select ReferencedTableName, ReferencedColumnName 
-        from all_fk_cols fk 
+        from vw_all_fk_cols fk 
         where ParentTableName = @parent_table and ReferencedColumnName = @parent_col
     )
     BEGIN
         declare @ref_schema varchar(100), @ref_table varchar(100), @ref_col varchar(100), @sql nvarchar(255) 
 
         select top 1 @ref_schema = SchemaName,  @ref_table = ReferencedTableName, @ref_col = ReferencedColumnName
-            from all_fk_cols fk 
+            from vw_all_fk_cols fk 
             where ParentTableName = @parent_table and ReferencedColumnName = @parent_col
 
         set @sql = concat('declare @count int 
@@ -143,14 +171,14 @@ AS
 BEGIN
 
     IF EXISTS (select tablename
-        from all_pk_cols fk
+        from vw_all_pk_cols fk
         where tablename = @table and columnname = @col
     )
     BEGIN
         declare @schema varchar(100),  @sql nvarchar(255) 
 
         select top 1 @schema = schemaname
-            from all_pk_cols pk 
+            from vw_all_pk_cols pk 
             where tablename = @table and columnname = @col
 
         set @sql = concat('declare @count int 

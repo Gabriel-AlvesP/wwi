@@ -1,7 +1,6 @@
 use WWIGlobal
 GO
 
--- TODO: CHECK ENCRYPTION
 CREATE OR ALTER PROCEDURE sp_generate_action
 	@tableName varchar(100) = 'wwi_user',
 	@action     varchar(100) = 'all'
@@ -101,6 +100,12 @@ BEGIN
                 set @sql_validations += CONCAT('exec sp_validate_fk ', @tableName, ', ', @col_name, ', @', @col_name, char(13)) 
             END
 
+            IF EXISTS (select * from vw_unique_cols where tableName = @tableName and columnName = @col_name)
+            BEGIN
+                set @sql_validations += CONCAT(' IF EXISTS (select * from ' , @schema , '.' , @tableName , ' where ' , @col_name ,' = @' , @col_name , ') begin
+            exec sp_throw_error 51007, 1, @' , @col_name , ', ' , @col_name, ' end') 
+            END
+
             -- Body
             set @sql_body += CONCAT('@', @col_name)
 
@@ -168,7 +173,7 @@ BEGIN
                 set @sql_params += ' = null'
             END
 
-            IF NOT EXISTS (select all_pk.tableName from all_pk_cols all_pk where all_pk.tableName = @tableName and all_pk.columnName = @col_name)
+            IF NOT EXISTS (select all_pk.tableName from vw_all_pk_cols all_pk where all_pk.tableName = @tableName and all_pk.columnName = @col_name)
             BEGIN
 	            -- Validations
 	            IF @col_type in ( 'tinyint', 'smallint', 'int')
@@ -235,7 +240,7 @@ BEGIN
 	    SELECT c.column_id, c.name, TYPE_NAME(c.user_type_id), c.max_length, c.[precision], c.is_nullable
 	    FROM sys.tables o
 	    INNER JOIN sys.columns as c on c.object_id = o.object_id
-	    WHERE LOWER(o.name) = @tableName and exists (select columnName from all_pk_cols pk where @tableName = pk.tableName  and pk.columnName = c.name )
+	    WHERE LOWER(o.name) = @tableName and exists (select columnName from vw_all_pk_cols pk where @tableName = pk.tableName  and pk.columnName = c.name )
 
         OPEN gen_cur
 	    FETCH NEXT FROM gen_cur INTO @col_id, @col_name, @col_type, @col_len, @col_precision, @col_null
@@ -290,11 +295,16 @@ BEGIN
 END
 GO
 
---exec sp_generate_action 'systemuser', 'all'; --:)
+exec sp_generate_action 'systemuser', 'all'; --:)
+DELETE FROM Authentication.SystemUser where CustomerId =1
+GO
+declare @merda varbinary(32) = HASHBYTES('SHA2_256', 'umpasswdgrande')
+exec sp_systemuser_insert  2, 'client@client.com', @merda
+GO
+
+print Authentication.fn_authenticateUser('client@client.com', N'password')
 --go
---exec sp_systemuser_insert  1, 'client@client.com', 'password'
---go
---select * from Authentication.SystemUser where Email = 'client@client.com'
+select * from Authentication.SystemUser 
 --Go
 --exec sp_systemuser_update 1,  'godclient@client.com', 'passwd'
 --GO

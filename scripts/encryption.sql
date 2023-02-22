@@ -11,46 +11,58 @@ GO
 
 -- Create Encryption Certificate
 CREATE CERTIFICATE wwiGlobalCert1
-WITH SUBJECT = 'Encrypt stuff'
+WITH SUBJECT = 'Encrypt secrets'
 GO
 
 -- Create Symetric Key
-CREATE SYMMETRIC KEY EncryptSomething
+CREATE SYMMETRIC KEY EncryptPrices
 WITH ALGORITHM = TRIPLE_DES 
-ENCRYPTION BY CERTIFICATE wwiGlobalCert
+ENCRYPTION BY CERTIFICATE wwiGlobalCert1
 GO
 
+
 -- Add column which will hold encrypted data in binary
-ALTER TABLE tableName 
-ADD col VARBINARY(256)
+ALTER TABLE Stock.ProductModel
+ADD E_StandardUnitCost VARBINARY(256), 
+E_CurrentRetailPrice VARBINARY(256),
+E_RecommendedRetailPrice VARBINARY(256)
 GO
 
 -- Update binary column with encrypted data created by certificate and key
-OPEN SYMMETRIC KEY EncryptSomething DECRYPTION
+OPEN SYMMETRIC KEY EncryptPrices DECRYPTION
 BY CERTIFICATE wwiGlobalCert1
-UPDATE tableName
-SET col =
-ENCRYPTBYKEY(KEY_GUID('EncryptSomething'), columnWithDataToEncrypt)
+UPDATE Stock.ProductModel
+SET 
+    E_StandardUniCost = ENCRYPTBYKEY(KEY_GUID('EncryptPrices'), StandardUnitCost),
+    E_CurrentRetailPrice = ENCRYPTBYKEY(KEY_GUID('EncryptPrices'), CurrentRetailPrice),
+    E_RecommendedRetailPrice = ENCRYPTBYKEY(KEY_GUID('EncryptPrices'), RecommendedRetailPrice )
 GO
 
--- DROP the original column
---ALTER TABLE tableName
---DROP COLUMN <columnWithDataToEncrypt>
---GO
+-- Drop the original column
+ALTER TABLE tableName
+DROP COLUMN StandardUniCost,
+CurrentRetailPrice,
+RecommendedRetail
+GO
 
 -- Decrypt a column and convert its data to varchar
---OPEN SYMMETRIC KEY <KeyName> DECRYPTION
---BY CERTIFICATE <databaseNameCert>
---SELECT CONVERT(VARCHAR(50), DECRYPTBYKEY(<columnToDecrypt>)) as Something
---from <tableName>
---GO
---
---CLOSE SYMMETRIC KEY <KeyName>
---GO
+CREATE OR ALTER PROCEDURE sp_getPrices
+AS 
+BEGIN
+    OPEN SYMMETRIC KEY EncryptPrices DECRYPTION
+    BY CERTIFICATE wwiGlobalCert1
+    SELECT 
+    CONVERT(VARCHAR(50), DECRYPTBYKEY(E_StandardUniCost)) as StandardUniCost,
+    CONVERT(VARCHAR(50), DECRYPTBYKEY(E_CurrentRetailPrice)) as CurrentRetailPrice,
+    CONVERT(VARCHAR(50), DECRYPTBYKEY(E_RecommendedRetailPrice)) as RecommendedRetailPrice
+    from Stock.ProductModel
+    CLOSE SYMMETRIC KEY EncryptPrices
+end
+GO
 
 -- Hash columns
-CREATE OR ALTER FUNCTION fn_hashIt(@col nvarchar(32))
-RETURNS varbinary(32)
+CREATE OR ALTER FUNCTION Authentication.fn_hashIt(@col nvarchar(32))
+RETURNS nvarchar(32)
 AS BEGIN
     DECLARE @var nvarchar(32) = convert(nvarchar(32),@col)
     RETURN HASHBYTES ('SHA2_256', @col)
@@ -58,7 +70,7 @@ END
 GO
 
 CREATE OR ALTER FUNCTION Authentication.fn_authenticateUser
-(@email varhar(255), @passwd nvarchar(32))
+(@email varchar(255), @passwd nvarchar(32))
 RETURNS bit
 AS
 BEGIN
@@ -73,3 +85,4 @@ BEGIN
     END
     return 0
 END
+GO

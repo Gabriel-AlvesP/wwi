@@ -1,6 +1,8 @@
 USE master
 ALTER DATABASE WWIGlobal SET RECOVERY FULL;
 GO
+
+-- TODO: add jobs
 -- Back up the WWIGlobal database to new media set (backup set 1).
 BACKUP DATABASE WWIGlobal
   TO DISK = 'C:\SQLServerBackups\WWIGlobalFullRM.bak'
@@ -13,6 +15,7 @@ GO
 ---------------------------------------------
 -- Recover to the point of failure
 Use master; 
+--Create tail-log backup.
 BACKUP LOG WWIGlobal
 TO DISK = 'C:\SQLServerBackups\WWIGlobalFullRM.bak'
    WITH NORECOVERY;
