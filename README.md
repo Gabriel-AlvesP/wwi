@@ -159,13 +159,16 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 - SalesOrderDetails migration
 
+- Cities migration
+
 - Address number > customer number
 
 - SalesOrderDetails table has 169117 and should be 170155
 
 ## TODO
 
-- [ ] Taxa de crescimento e dimensao maxima
+--------------- HOJE ----------------
+
 
 - [ ] Migration check
 
@@ -173,6 +176,10 @@ Postal code is in a dedicated table because there are multiple cities with the s
    1. views
    2. indexes
    3. functions
+
+--------------- AMANHA --------------
+
+- [ ] Taxa de crescimento e dimensao maxima
 
 - json to sql server
 
