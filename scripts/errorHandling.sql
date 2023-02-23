@@ -58,9 +58,11 @@ BEGIN
 
         (52103, 'Password must have at least 8 characters.'),
 
-        (52104, 'Email and password do not match')
+        (52104, 'Email and password do not match'),
 
+        (52105, 'Email `%s` was not found'),
 
+        (52106, 'Access token was not found')
 
     END
 END

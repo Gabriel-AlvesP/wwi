@@ -50,11 +50,17 @@ filegroup WWIGlobal_fg3 (
 
 -- Log File
 log on (
-    name = 'wwiglobal_log',
+    name = 'wwiglobal_log1',
     filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwiglobal_log.ldf',
-    SIZE = 300MB,
-    MAXSIZE = 600MB,
-    FILEGROWTH = 300MB
+    SIZE = 100MB,
+    MAXSIZE = 300MB,
+    FILEGROWTH = 100MB
+), (
+    name = 'wwiglobal_log2',
+    filename = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\wwiglobal_log2.ldf',
+    SIZE = 100MB,
+    MAXSIZE = 300MB,
+    FILEGROWTH = 100MB
 )
 GO
 

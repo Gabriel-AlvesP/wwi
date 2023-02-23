@@ -4,6 +4,7 @@ GO
 --DBCC TRACEON (3226, -1);
 --DBCC TRACEOFF (3226, -1);
 GO
+GO
 CREATE SCHEMA Customers
 GO
 CREATE SCHEMA Sales
@@ -26,8 +27,8 @@ CREATE TABLE Customers.Customer (
     AddressId     int NOT NULL,
 ) ON WWIGlobal_fg3;
 CREATE TABLE Authentication.Token (
-    Token        uniqueidentifier NOT NULL PRIMARY KEY
-    DEFAULT newid(),
+    Token        varchar(255) NOT NULL PRIMARY KEY,
+    --DEFAULT newid(),
     SentDate     datetime2(2) NOT NULL DEFAULT SYSDATETIME(),
     SystemUserId int NOT NULL,
 ) ON WWIGlobal_fg1;
@@ -130,21 +131,24 @@ CREATE TABLE Customers.BuyingGroup (
     BuyingGroupId int IDENTITY NOT NULL PRIMARY KEY,
     Name          varchar(255) NOT NULL UNIQUE,
 );
-CREATE TABLE dbo.SystemControl (
-    SchemaName varchar(255) NOT NULL,
-    TableName  varchar(255) NOT NULL,
-    ColumnName varchar(255) NOT NULL,
-    DataType   int NOT NULL,
-    Length     bigint NOT NULL,
-    Nullable   bit NOT NULL,
-    IsUnique   bit NOT NULL,
-    UpdateDate datetime2(2) NOT NULL DEFAULT SYSDATETIME()
+CREATE TABLE dbo.Monitoring (
+    Table_name                  varchar(255) NOT NULL,
+    Column_name                 varchar(255) NOT NULL,
+    Data_Type                   varchar(255) NOT NULL,
+    Is_nullable                 char(3) NOT NULL,
+    Numeric_precision           bigint NULL,
+    Character_maximum_length    bigint NULL,
+    Referenced_column           varchar(255) NULL,
+    Referenced_table            varchar(255) NULL,
+    Update_date                 datetime2 DEFAULT SYSDATETIME()
 );
-CREATE TABLE dbo.Estimation (
-    TableName        varchar(255) NOT NULL,
-    EntriesNumber    bigint NOT NULL,
-    EstimatedStorage bigint NOT NULL,
-    UpdateDate       datetime2(2) NOT NULL DEFAULT SYSDATETIME()
+CREATE TABLE dbo.Data_Estimation (
+    Table_name          varchar(255) NOT NULL,
+    Entries_number      varchar(max) NOT NULL,
+    Reserved_storage    varchar(max) NOT NULL,
+    Data_storage        varchar(max) NOT NULL,
+    Data_per_registry   FLOAT NOT NULL,
+    Update_date         datetime2(2) NOT NULL DEFAULT SYSDATETIME()
 );
 CREATE TABLE Location.Address (
     AddressId  int IDENTITY NOT NULL PRIMARY KEY,
@@ -181,7 +185,7 @@ CREATE TABLE Shipments.Transport (
     ShippingDate date NOT NULL,
     DeliveryDate date NULL,
     LogisticId   int NULL,
-    TrakingNumber varbinary NULL,
+    TrackingNumber varchar(255) NULL,
 );
 CREATE TABLE Location.Continent (
     ContinentId tinyint IDENTITY NOT NULL PRIMARY KEY,
