@@ -167,8 +167,4 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## TODO
 
-- [ ] Taxa de crescimento e dimensao maxima
-
-- json to sql server
-
-- [ ] monitorizacao
+- [ ] mongo
