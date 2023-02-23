@@ -328,14 +328,15 @@ AS BEGIN
 END
 GO
 
--- verificação da data de validade de uma promoção 
-CREATE OR ALTER PROC sp_deleteOldDiscounts
+-- Delete discounts that are no longer active
+CREATE OR ALTER PROC Sales.sp_deleteOldDiscounts
 AS BEGIN
     delete from Sales.Discount where EndDate < GETDATE()
 END
 GO
 
--- adicionar/atualizar/remover utilizadores
+-- Authentication
+-- create user
 exec sp_generate_action 'systemuser', 'all'; --:)
 go
 CREATE OR ALTER PROC Authentication.sp_insertUser
@@ -343,19 +344,10 @@ CREATE OR ALTER PROC Authentication.sp_insertUser
     @email varchar(255),
     @passwd varchar(32)
 AS BEGIN
-    IF NOT EXISTS (SELECT customerId from Customers.Customer where CustomerId = @customerId)
-    BEGIN
-        exec sp_throw_error 52000, 1, @customerId
-    END
     
     IF @email is null or @email = '' 
     BEGIN
         exec sp_throw_error 52101, 1
-    END
-
-    IF EXISTS (select email from Authentication.SystemUser where Email = @email)
-    BEGIN
-        exec sp_throw_error 52102, 1, @email
     END
 
     IF @passwd is null or len(@passwd) < 8
@@ -363,14 +355,47 @@ AS BEGIN
         exec sp_throw_error 52103, 1
     END
 
-    exec sp_systemuser_insert @customerId, @email, convert(varchar(32), HASHBYTES('MD5', @passwd))
+    DECLARE @hashed_passwd varchar(32) = convert(varchar(32), HASHBYTES('MD5', @passwd))
+    exec sp_systemuser_insert @customerId, @email, @hashed_passwd
 END
 GO
 
+-- user udpate
+CREATE OR ALTER PROC Authentication.sp_updateUser
+    @customerId int,
+    @email varchar(255),
+    @oldPasswd varchar(32),
+    @newPasswd varchar(32)
+as BEGIN
 
+    IF @email is null or @email = '' 
+    BEGIN
+        exec sp_throw_error 52101, 1
+    END
+    
+    IF @newPasswd is null or len(@newPasswd) < 8
+    BEGIN
+        exec sp_throw_error 52103, 1
+    END
+
+    DECLARE @hashed_passwd varchar(32) = convert(varchar(32), HASHBYTES('MD5', @oldPasswd)),
+    @hashed_newPasswd varchar(32) 
+
+    IF NOT EXISTS(select * from Authentication.SystemUser where Email = @email and Passwd = @hashed_passwd)
+    BEGIN
+        exec sp_throw_error 52104
+    END
+
+    set @hashed_newPasswd = convert(varchar(32), HASHBYTES('MD5', @newPasswd))
+    exec sp_systemuser_update @customerId, @email, @hashed_newPasswd
+    PRINT 'Update information was successful'
+END
+GO
+
+-- User authentication
 CREATE OR ALTER PROC Authentication.authenticateUser
     @email varchar(255),
-    @passwd nvarchar(32)
+    @passwd varchar(32)
 AS BEGIN
     IF EXISTS (select * from Authentication.SystemUser where
         email = @email
@@ -382,16 +407,51 @@ AS BEGIN
     END
     ELSE
     BEGIN
-        Print 'Email or passwd do not match'
+        Print 'Email or password do not match'
     End
 END
 GO
---autenticação por parte dos clientes com recurso ao ‘email’ e ‘password’
 
--- recuperar a ‘password’ com recurso a um ‘token’ de verificação gerado e enviado automaticamente para o email do utilizador
+-- Recover password 
+CREATE OR ALTER PROC Authentication.sp_recoverPasswd
+    @email varchar(255)
+AS BEGIN
+    DECLARE @userId int, @token varchar(255), @hashed_token varchar(255)
 
-CREATE OR ALTER PROC sp_restorePasswd
+    IF EXISTS (select email from Authentication.SystemUser where Email = @email)
+    BEGIN
+        select @userId = customerId from Authentication.SystemUser where @email = Email
+            
+        set @token = convert(varchar(255), newid())
+        set @hashed_token = convert(varchar(255), hashbytes('MD5', @token))
+        INSERT INTO Authentication.Token(Token, SystemUserId) VALUES(@hashed_token,@userId)
+
+        print 'An email was sent to your account with a token access'
+
+    END
+    ELSE 
+    BEGIN
+        exec sp_throw_error 52105, 1, @email
+    END
+END
+GO
+
+CREATE OR ALTER PROC Authentication.sp_restorePasswd
+    @token varchar(255),
+    @newPasswd varchar(32)
 AS
+BEGIN
+    DECLARE @userId int
 
+    set @token = convert(varchar(255), hashbytes('MD5', @token))
+    IF NOT EXISTS (select * from Authentication.Token where Token = @token)
+    BEGIN
+        exec sp_throw_error 52106
+    END
 
+    select @userId = SystemUserId from Authentication.Token where Token = @token
+
+    update Authentication.SystemUser set Passwd = @newPasswd where CustomerId = @userId
+    PRINT 'Restore password was successful'
+END
 GO
