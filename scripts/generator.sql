@@ -2,7 +2,7 @@ use WWIGlobal
 GO
 
 CREATE OR ALTER PROCEDURE sp_generate_action
-	@tableName varchar(100) = 'wwi_user',
+	@tableName varchar(100) = 'systemuser',
 	@action     varchar(100) = 'all'
 AS
 BEGIN
@@ -295,16 +295,10 @@ BEGIN
 END
 GO
 
-exec sp_generate_action 'systemuser', 'all'; --:)
-DELETE FROM Authentication.SystemUser where CustomerId =1
-GO
-declare @merda varbinary(32) = HASHBYTES('SHA2_256', 'umpasswdgrande')
-exec sp_systemuser_insert  2, 'client@client.com', @merda
-GO
-
-print Authentication.fn_authenticateUser('client@client.com', N'password')
+--exec sp_generate_action 'systemuser', 'all'; --:)
+--GO
 --go
-select * from Authentication.SystemUser 
+--select * from Authentication.SystemUser 
 --Go
 --exec sp_systemuser_update 1,  'godclient@client.com', 'passwd'
 --GO

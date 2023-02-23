@@ -167,15 +167,6 @@ Postal code is in a dedicated table because there are multiple cities with the s
 
 ## TODO
 
---------------- HOJE ----------------
-
-- [ ] 2.1.2 Programacao!!!
-   1. views
-   2. indexes
-   3. functions
-
---------------- AMANHA --------------
-
 - [ ] Taxa de crescimento e dimensao maxima
 
 - json to sql server

@@ -8,6 +8,7 @@ BEGIN
     BEGIN
 		INSERT INTO dbo.Error(ErrorId, ErrorMessage) 
 		VALUES
+        -- General errors
         (51001, 'This error is new. Please, report it to the admin.'),
 
 		(51002, 'Action `%s` does not exist.
@@ -25,15 +26,41 @@ BEGIN
 
 
         -- Business Logic
-        (52001, 'A sale can only have 1 type of chiller/dry product'),
-
+        -- Sales 000
         (52000, 'Customer `%s` does not exists.'),
 
+        (52001, 'A sale can only have 1 type of chiller/dry product'),
+
+        (52002, 'Product `%s` is already in sale `%s`.'),
+
+        (52003, 'Product `%s` does not exists.'),
+
+        (52004, 'Sale `%s` does not exists.'),
+
+        (52005, 'Sale `%s` does not have the product `%s`.'),
+
+        (52006, 'Discount `%s` does not exists'),
+
+        (52007, 'Discount `%s` was already applied to `%s` product'),
+
+        (52008, 'Discount end date must be greater than the start date.'),
+
+        (52009, 'You can only apply active discounts to products.'),
+
+        (52010, 'Discount end date must be greater than the current date.'),
+
+        (52011, 'Discount `%s` was not applied to `%s` product'),
+
+        -- Authentication 100
         (52101, 'Email cannot be null or empty.'),
 
         (52102, 'This email `%s` is already in use.'),
 
-        (52103, 'Password must have at least 8 characters.')
+        (52103, 'Password must have at least 8 characters.'),
+
+        (52104, 'Email and password do not match')
+
+
 
     END
 END

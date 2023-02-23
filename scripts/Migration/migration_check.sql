@@ -81,13 +81,15 @@ from (
 	from WWI_OldData.dbo.[Stock Item]
 ) si 
 join WWI_OldData.dbo.Sale s on si.[Stock Item Key] = s.[Stock Item Key]
+right join Sales.SalesOrderHeader soh on soh.SaleId = s.[WWI Invoice ID] and s.[Customer Key] = soh.CustomerId
 group by si.product ) x group by x.product order by x.product
 GO
+
 --
 select 
 p.Name, sum(sod.Quantity * pm.StandardUnitCost)
 from Sales.SalesOrderDetails sod 
-inner join Stock.ProductModel pm on sod.ProductId = pm.ProductId 
+inner join Stock.ProductModel pm on sod.ProductId = pm.ProductModelId 
 inner join Stock.Product p on p.ProductId = pm.ProductId
 group by p.Name
 order by p.Name
@@ -128,6 +130,7 @@ from (
 	from WWI_OldData.dbo.[Stock Item]
 ) si 
 inner join WWI_OldData.dbo.Sale s on si.[Stock Item Key] = s.[Stock Item Key]
+right join Sales.SalesOrderHeader soh on soh.SaleId = s.[WWI Invoice ID] and s.[Customer Key] = soh.CustomerId
 group by si.product, s.[Invoice Date Key]) x 
 group by x.product, year 
 order by year, x.product
@@ -148,6 +151,7 @@ GO
 -- Value in sales per year and city
 select c.City, YEAR(s.[Invoice Date Key]), SUM(s.[Total Excluding Tax]) 
 from WWI_OldData.dbo.Sale s
+inner join Sales.SalesOrderHeader soh on soh.SaleId = s.[WWI Invoice ID] and s.[Customer Key] = soh.CustomerId
 inner join WWI_OldData.dbo.City c on s.[City Key] = c.[City Key]
 group by c.City, c.[State Province], YEAR(s.[Invoice Date Key])
 order by YEAR(s.[Invoice Date Key]), c.City
@@ -161,7 +165,7 @@ inner join Sales.SalesOrderHeader soh on sod.SaleId = soh.Saleid
 inner join [Location].City c on c.CityId = soh.CityId
 inner join [Location].CityName cn on cn.CityNameId = c.CityNameId
 group by  YEAR(soh.DueDate), cn.Name
-order by YEAR(soh.DueDate)
+order by YEAR(soh.DueDate), cn.Name
 GO
 --
 
@@ -177,9 +181,10 @@ from WWI_OldData.dbo.City c
 group by City, [State Province]
 GO
 --  Should have 37940 -> have 37867 => 73
-select CityNameId, StateProvinceCode, CountryId 
-from [Location].City 
-group by CityNameId, StateProvinceCode, CountryId
+select cn.Name, StateProvinceCode 
+from [Location].City c
+inner join [Location].CityName cn on cn.CityNameId = c.CityNameId
+group by c.CityNameId, cn.Name, StateProvinceCode 
 GO
 --
 -----------------------------------------------
@@ -277,7 +282,7 @@ from (
 	[Recommended Retail Price],
 	[Typical Weight Per Unit] 
 	from WWI_OldData.dbo.[Stock Item]
-) si ;
+) si 
 
 -----------------------------------------------
 
@@ -326,7 +331,18 @@ GO
 select [WWI Invoice ID], [Customer Key], s.Quantity, s.[Unit Price] from WWI_OldData.dbo.Sale s join Sales.SalesOrderHeader soh on s.[WWI Invoice ID] = soh.SaleId and s.[Customer Key] = soh.CustomerId order by [WWI Invoice ID]
 GO
 -- New SalesOrderDetails
-select sod.SaleId, soh.CustomerId, sod.ProductId, sod.Quantity, sod.ListedUnitPrice, sod.TaxRateId, sod.DiscountId from Sales.SalesOrderDetails sod left join Sales.SalesOrderHeader soh on sod.SaleId = soh.SaleId order by sod.SaleId
+select sod.SaleId, soh.CustomerId, sod.ProductId, sod.Quantity, sod.TaxRateId, sod.DiscountId from Sales.SalesOrderDetails sod left join Sales.SalesOrderHeader soh on sod.SaleId = soh.SaleId 
+order by soh.SaleId
 GO
 
 -----------------------------------------------
+use WWIGlobal;
+select p.Name, b.Name, s.Value, tr.[Value], pm.*
+from Stock.ProductModel pm 
+inner join Stock.Product p on p.ProductId = pm.ProductId 
+inner join Stock.Brand b on b.BrandId = pm.BrandId
+inner join Stock.[Size] s on s.SizeId = pm.SizeId
+inner join Stock.TaxRate tr on tr.TaxRateId = pm.TaxRateId
+where ProductModelId= 63
+
+select * from WWI_OldData.dbo.[Stock Item] where [Stock Item Key]= 196

@@ -123,7 +123,7 @@ CREATE TABLE Sales.SalesOrderDetails (
     Quantity          smallint NOT NULL,
     ListedUnitPrice   money NOT NULL,
     TaxRateId         int NOT NULL,
-    DiscountId        int NULL,
+    DiscountRate      numeric(5,2) NOT NULL DEFAULT 0,
     PRIMARY KEY (ProductId, SaleId)
 ) ON WWIGlobal_fg3;
 CREATE TABLE Customers.BuyingGroup (
@@ -155,7 +155,7 @@ CREATE TABLE Location.Address (
 CREATE TABLE Authentication.SystemUser (
     CustomerId int NOT NULL PRIMARY KEY,
     Email      varchar(255) NOT NULL UNIQUE,
-    Passwd     varbinary(32) NOT NULL,
+    Passwd     varchar(32) NOT NULL,
 );
 CREATE TABLE Sales.Currency (
     Abbreviation char(3) NOT NULL PRIMARY KEY,
@@ -179,8 +179,9 @@ CREATE TABLE Shipments.Logistic (
 CREATE TABLE Shipments.Transport (
     SaleId       int NOT NULL PRIMARY KEY,
     ShippingDate date NOT NULL,
-    DeliveryDate date NOT NULL,
-    LogisticId   int NOT NULL,
+    DeliveryDate date NULL,
+    LogisticId   int NULL,
+    TrakingNumber varbinary NULL,
 );
 CREATE TABLE Location.Continent (
     ContinentId tinyint IDENTITY NOT NULL PRIMARY KEY,
@@ -237,7 +238,6 @@ ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesOrder444426 FOREIGN KE
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer989078 FOREIGN KEY (BuyingGroupId) REFERENCES Customers.BuyingGroup (BuyingGroupId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Customers.Customer ADD CONSTRAINT FKCustomer142132 FOREIGN KEY (CategoryId) REFERENCES Customers.BusinessCategory (CategoryId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderHeader ADD CONSTRAINT FKSalesOrder38550 FOREIGN KEY (BillToCustomer) REFERENCES Customers.Customer (CustomerId) ON DELETE NO ACTION ON UPDATE NO ACTION;
-ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesOrder274263 FOREIGN KEY (DiscountId) REFERENCES Sales.Discount (DiscountId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Sales.SalesOrderDetails ADD CONSTRAINT FKSalesDetails_TaxRate FOREIGN KEY (TaxRateId) REFERENCES Stock.TaxRate (TaxRateId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Authentication.Token ADD CONSTRAINT FKToken31840 FOREIGN KEY (SystemUserId) REFERENCES Authentication.SystemUser (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Authentication.SystemUser ADD CONSTRAINT FKSystemUser205753 FOREIGN KEY (CustomerId) REFERENCES Customers.Customer (CustomerId) ON DELETE CASCADE ON UPDATE CASCADE;

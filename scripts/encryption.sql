@@ -60,14 +60,6 @@ BEGIN
 end
 GO
 
--- Hash columns
-CREATE OR ALTER FUNCTION Authentication.fn_hashIt(@col nvarchar(32))
-RETURNS nvarchar(32)
-AS BEGIN
-    DECLARE @var nvarchar(32) = convert(nvarchar(32),@col)
-    RETURN HASHBYTES ('SHA2_256', @col)
-END
-GO
 
 CREATE OR ALTER FUNCTION Authentication.fn_authenticateUser
 (@email varchar(255), @passwd nvarchar(32))

@@ -13,12 +13,35 @@ CREATE NONCLUSTERED INDEX nc_invoiceId_customerId ON WWI_OldData.dbo.Sale([WWI I
 END
 GO
 
+
 use WWIGlobal
 GO
 SET ANSI_NULLS OFF;
 GO
 SET NOCOUNT ON;
 GO
+
+CREATE FUNCTION dbo.fn_parseStateProv(@stateProv varchar(100))
+RETURNS varchar(100)
+AS BEGIN
+    
+        IF @stateProv like '%(%' 
+        begin
+            return trim(SUBSTRING(@stateProv, 1, CHARINDEX('(', @stateProv)))
+
+        end
+
+        IF @stateProv like '%[%'        
+        begin
+            return  trim(SUBSTRING(@stateProv, 1, CHARINDEX('[', @stateProv)))
+        end
+
+    return @stateProv
+end
+GO
+
+
+
 CREATE OR ALTER PROCEDURE sp_import_continents
 AS
 BEGIN
@@ -180,10 +203,14 @@ BEGIN
     OPEN city_cur
     FETCH NEXT FROM city_cur INTO @city, @population, @stateProv, @country
 
+
     WHILE @@FETCH_STATUS = 0
     BEGIN 
         select @cityNameId = cityNameId from Location.CityName where Name = @city
-        select @stateProvCode = Code from Location.StateProvince where Name = @stateProv
+
+        set @stateProv = dbo.fn_parseStateProv(@stateProv)
+        select @stateProvCode = Code from Location.StateProvince where trim(Name) = trim(@stateProv)
+
         select @countryId = CountryId from Location.Country where Name = @country
 
         IF NOT EXISTS (SELECT countryId from Location.StateProvince_Country where CountryId = @countryId and StateProvinceCode = @stateProvCode)
@@ -265,9 +292,9 @@ BEGIN
     BEGIN
         IF @cityAndState like '%,%'
         BEGIN 
-            select @cityNameId = cityNameId from Location.CityName where Name = substring(@cityAndState, 1, charindex(',',@cityAndState)-1)
+            select @cityNameId = cityNameId from Location.CityName where Name = trim(substring(@cityAndState, 1, charindex(',',@cityAndState)-1))
 
-            SET @stateCode = substring(@cityAndState, charindex(',', @cityAndState)+2, len(@cityAndState))
+            SET @stateCode = trim(substring(@cityAndState, charindex(',', @cityAndState)+1, len(@cityAndState)))
 
             select @cityId = cityId from Location.City where stateProvinceCode = @stateCode and CityId= @cityNameId
 
@@ -372,7 +399,7 @@ BEGIN
             set @stateCode = trim(substring(@cityAndState, charindex(',', @cityAndState)+1, len(@cityAndState)))
 
             -- Start city handling 
-            IF NOT EXISTS (select cityId from Location.City c join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city)
+            IF NOT EXISTS (select cityId from Location.City c inner join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city)
             BEGIN
                 select @citynameId = CityNameId from Location.CityName where Name = @city
 
@@ -383,11 +410,11 @@ BEGIN
             END
             ELSE
             BEGIN
-                select @cityId = cityId from Location.City c join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city
+                select @cityId = cityId from Location.City c inner join Location.CityName cn on c.CityNameId = cn.CityNameId where stateProvinceCode = @stateCode and cn.Name = @city
             END
             -- End of city handling
 
-            IF NOT EXISTS (select addressId from Location.Address where cityId = @cityId and cast(@postalCode as int) = postalCode)
+            IF NOT EXISTS (select addressId from Location.Address where cityId = @cityId and cast(@postalCode as int) = postalCode) and @cityId is not null
             BEGIN
                 INSERT INTO Location.Address(PostalCode, CityId) VALUES(@postalCode, @cityId)
                 set @addressId = SCOPE_IDENTITY()
@@ -1005,6 +1032,9 @@ BEGIN
         BEGIN 
 			-- cityId
 			SELECT @cityName = City, @state = [State Province] from WWI_OldData.dbo.City where [City Key] = @oldCityId --
+
+            set @state = dbo.fn_parseStateProv(@state)
+
 			SELECT @cityNameId = cityNameId from Location.CityName where Name = @cityName 
 			SELECT @stateId = Code from Location.StateProvince where Name = @state
 			SELECT @cityId = cityId from Location.City where CityNameId = @cityNameId and StateProvinceCode = @stateId and countryId = 1
