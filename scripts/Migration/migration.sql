@@ -1239,69 +1239,69 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROC sp_import_logistic
-AS BEGIN
-    Declare @JSON varchar(max)
-SELECT @JSON=BulkColumn
-FROM OPENROWSET (BULK 'D:\GitHub\wwi\data\adenda.json', SINGLE_CLOB) as x
-
-declare logistic_cur cursor for SELECT name, transport FROM OPENJSON (@JSON)
-WITH  (
-   name varchar(10),
-   transport nvarchar(max)
-) 
-
-declare @logisticName varchar(10), @transport nvarchar(max), @logisticId int
-
-open logistic_cur
-fetch next from logistic_cur into @logisticName, @transport
-
-    while @@FETCH_STATUS = 0
-    BEGIN
-        IF not exists (select * from Shipments.Logistic where Name = @logisticName)
-        begin
-            INSERT INTO Shipments.Logistic(Name) VALUES(@logisticName)
-            set @logisticId = SCOPE_IDENTITY() 
-
-            DECLARE transport_cur cursor for select saleid, shippingDate, deliveryDate, trackingNumber 
-            from OPENJSON(@transport)
-			WITH  (
-			    saleid int,
-			    shippingDate date,
-			    deliveryDate date,
-			    trackingNumber varchar(255)
-			)
-        
-		declare 
-		    @saleid int,
-		    @shippingDate date,
-		    @deliveryDate date,
-		    @trackingNumber varchar(255)
-
-        open transport_cur
-        fetch next from transport_cur into @saleid, @shippingDate, @deliveryDate, @trackingNumber
-
-        WHILE @@FETCH_STATUS = 0
-        BEGIN
-            if not exists (select * from Shipments.Transport where saleId = @saleid)
-            begin
-                INSERT INTO Shipments.Transport(SaleId, ShippingDate, DeliveryDate, TrackingNumber, LogisticId)
-                VALUES(@saleid, @shippingDate, @deliveryDate, @trackingNumber, @logisticId)
-            end
-            fetch next from transport_cur into @saleid, @shippingDate, @deliveryDate, @trackingNumber
-        END
-
-        close transport_cur
-        deallocate transport_cur
-        fetch next from logistic_cur into @logisticName, @transport
-        end
-    end
-
-    close logistic_cur
-    deallocate logistic_cur
-end
-go
-
+--CREATE OR ALTER PROC sp_import_logistic
+--AS BEGIN
+--    Declare @JSON varchar(max)
+--SELECT @JSON=BulkColumn
+--FROM OPENROWSET (BULK 'D:\GitHub\wwi\data\adenda.json', SINGLE_CLOB) as x
+--
+--declare logistic_cur cursor for SELECT name, transport FROM OPENJSON (@JSON)
+--WITH  (
+--   name varchar(10),
+--   transport nvarchar(max)
+--) 
+--
+--declare @logisticName varchar(10), @transport nvarchar(max), @logisticId int
+--
+--open logistic_cur
+--fetch next from logistic_cur into @logisticName, @transport
+--
+--    while @@FETCH_STATUS = 0
+--    BEGIN
+--        IF not exists (select * from Shipments.Logistic where Name = @logisticName)
+--        begin
+--            INSERT INTO Shipments.Logistic(Name) VALUES(@logisticName)
+--            set @logisticId = SCOPE_IDENTITY() 
+--
+--            DECLARE transport_cur cursor for select saleid, shippingDate, deliveryDate, trackingNumber 
+--            from OPENJSON(@transport)
+--			WITH  (
+--			    saleid int,
+--			    shippingDate date,
+--			    deliveryDate date,
+--			    trackingNumber varchar(255)
+--			)
+--        
+--		declare 
+--		    @saleid int,
+--		    @shippingDate date,
+--		    @deliveryDate date,
+--		    @trackingNumber varchar(255)
+--
+--        open transport_cur
+--        fetch next from transport_cur into @saleid, @shippingDate, @deliveryDate, @trackingNumber
+--
+--        WHILE @@FETCH_STATUS = 0
+--        BEGIN
+--            if not exists (select * from Shipments.Transport where saleId = @saleid)
+--            begin
+--                INSERT INTO Shipments.Transport(SaleId, ShippingDate, DeliveryDate, TrackingNumber, LogisticId)
+--                VALUES(@saleid, @shippingDate, @deliveryDate, @trackingNumber, @logisticId)
+--            end
+--            fetch next from transport_cur into @saleid, @shippingDate, @deliveryDate, @trackingNumber
+--        END
+--
+--        close transport_cur
+--        deallocate transport_cur
+--        fetch next from logistic_cur into @logisticName, @transport
+--        end
+--    end
+--
+--    close logistic_cur
+--    deallocate logistic_cur
+--end
+--go
+--
 exec sp_populate_currency;
 GO
 exec sp_populate_currencyRate;
@@ -1348,8 +1348,8 @@ exec sp_import_salesOH;
 GO
 exec sp_import_salesOD;
 GO
-exec sp_import_logistic
-go
+--exec sp_import_logistic
+--go
 
 SET NOCOUNT OFF;
 GO
