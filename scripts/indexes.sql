@@ -15,7 +15,8 @@ group by cn.Name, CONCAT_WS(' ', e.FirstName, e.LastName)
 GO
 
 -- City
-CREATE NONCLUSTERED INDEX nc_salesOrderheader_salespersonCity ON Sales.SalesOrderHeader(salespersonId,cityId)
+--DROP INDEX nc_salesOrderheader_salespersonCity ON Sales.SalesOrderHeader
+CREATE NONCLUSTERED INDEX nc_salesOrderheader_salespersonCity ON Sales.SalesOrderHeader(cityId, salespersonId)
 GO
 
 
@@ -44,9 +45,8 @@ inner join (
 ) soh2 
 on soh1.curYear-1 = soh2.salesYear and soh2.Name = soh1.Name
 GO
--- Drop bc this index was created before the migration
-DROP INDEX nc_salesOrderHeader_dueDate ON Sales.SalesOrderheader
-CREATE NONCLUSTERED INDEX nc_salesOrderHeader_dueDate ON Sales.SalesOrderheader(DueDate) include (customerId)
+--DROP INDEX nc_salesOrderHeader_customerId ON Sales.SalesOrderheader
+CREATE NONCLUSTERED INDEX nc_salesOrderHeader_customerId ON Sales.SalesOrderheader(customerId) include (DueDate)
 GO
 
 --Número de produtos nas vendas por cor
@@ -60,9 +60,9 @@ inner join Stock.Color c on c.ColorId = cp.ColorId
 inner join Sales.SalesOrderDetails sod on sod.ProductId = pm.ProductModelId
 group by c.Name, p.Name, pm.Model
 go
---drop NONCLUSTERED INDEX nc_salesorderdetails_ ON Sales.SalesOrderDetails
-CREATE NONCLUSTERED INDEX nc_salesorderdetails_ ON Sales.SalesOrderDetails(ProductId)
-
+--drop  INDEX nc_salesorderdetails_productId ON Sales.SalesOrderDetails
+CREATE NONCLUSTERED INDEX nc_salesorderdetails_productId ON Sales.SalesOrderDetails(ProductId)
+Go
 
 SET STATISTICS IO ON
 GO

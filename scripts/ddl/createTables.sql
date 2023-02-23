@@ -281,7 +281,7 @@ GO
 -- Sales
 -- SalesOrderheader
 CREATE NONCLUSTERED INDEX nc_salesOrderHeader_salespersonId ON Sales.SalesOrderheader(SalespersonId)
-CREATE NONCLUSTERED INDEX nc_salesOrderHeader_dueDate ON Sales.SalesOrderheader(DueDate) include (customerId)
+CREATE NONCLUSTERED INDEX nc_salesOrderHeader_dueDate ON Sales.SalesOrderheader(DueDate)
 CREATE NONCLUSTERED INDEX nc_salesOrderHeader_cityId ON Sales.SalesOrderheader(CityId)
 GO
 -- Customers
