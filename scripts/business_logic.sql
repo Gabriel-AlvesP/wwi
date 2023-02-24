@@ -61,8 +61,7 @@ CREATE OR ALTER PROC Sales.sp_addProductToSale
     @productId int,
     @saleId int,
     @quantity int
-
-AS BEGIN 
+AS BEGIN tran 
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 
     DECLARE @listedUnitPrice money,
@@ -71,19 +70,19 @@ AS BEGIN
 
     IF Sales.fn_checkSalesODetailsEntry(@saleId, @productId) = 1
     BEGIN
-        ROLLBACK TRANSACTION
+        ROLLBACK TRANSACTION; 
         exec sp_throw_error 52002, 1, @productId, @saleId
     END
 
     IF NOT EXISTS (select * from Stock.ProductModel where @productId = ProductModelId)
     BEGIN
-        ROLLBACK TRANSACTION
+        ROLLBACK TRANSACTION; 
         exec sp_throw_error 52003, 1, @productId
     END
 
     IF Sales.fn_checkSale(@saleId) = 0
     BEGIN
-        ROLLBACK TRANSACTION
+        ROLLBACK TRANSACTION;
         exec sp_throw_error 52004, 1, @saleId
     END
 
@@ -107,10 +106,13 @@ AS BEGIN
     INSERT INTO Sales.SalesOrderDetails(ProductId, SaleId, Quantity, ListedUnitPrice, TaxRateId, DiscountRate)
     VALUES(@productId, @saleId, @quantity, @listedUnitPrice, @taxRateId, @discount)
     
-    COMMIT TRANSACTION
-END 
+    COMMIT TRANSACTION; 
 GO
 
+--exec Sales.sp_addProductToSale 2, 70511, 5
+--select * from Stock.ProductModel 
+--select * from Sales.SalesOrderDetails where saleid=70511
+GO
 -- Check sale product types (chiller or dry)
 CREATE OR ALTER TRIGGER Sales.tr_checkChillerStock 
 ON Sales.SalesOrderDetails
@@ -126,11 +128,14 @@ AS
         where sod.SaleId = @saleId
         ) <> 1
     BEGIN
-        ROLLBACK TRAN inserted;
+        ROLLBACK TRAN;
         exec sp_throw_error 52001, 1
     END
 GO
 
+--exec Sales.sp_removeProductfromSale 2, 70511
+--select * from Sales.SalesOrderDetails where saleid=70511
+GO
 -- Remove a product from a sale
 CREATE OR ALTER PROC Sales.sp_removeProductFromSale
     @productId  int,
@@ -159,6 +164,9 @@ BEGIN
 END
 GO
 
+--exec Sales.sp_updateQuantity 1, 70511, 4
+--select * from Sales.SalesOrderDetails where saleid=70511
+go
 -- Change product quantity in a sale
 CREATE OR ALTER PROC Sales.sp_updateQuantity
     @productId int,
@@ -201,6 +209,8 @@ AS
     FROM Sales.SalesOrderDetails sod
     inner join Stock.TaxRate t on sod.TaxRateId = t.TaxRateId
 GO
+--select * from Sales.vw_SaleProductDetails
+--GO
 
 -- Invoice information (isChiller, Customer, TotalDue,  ...)
 -- DROP VIEW Sales.vw_SaleInvoice
@@ -220,6 +230,8 @@ AS
     on spd.SaleId = soh.SaleId
     inner join (select pm.IsChiller, sod.SaleId  from Stock.ProductModel pm inner join Sales.SalesOrderDetails sod on sod.ProductId = pm.ProductModelId group by sod.SaleId, pm.IsChiller) p on spd.SaleId = p.SaleId
 GO
+--select * from Sales.vw_SaleInvoice order by SaleId
+--GO
 
 -- verificação da data de entrega de uma venda de acordo com as datas de entrega dos produtos a ela associados 
 CREATE OR ALTER TRIGGER  Sales.tr_checkShipmentDate
@@ -251,7 +263,25 @@ AS
     END
 GO
 
-exec sp_generate_action 'discount', 'insert'
+CREATE OR ALTER PROC Sales.sp_newDiscount
+    @startDate      varchar(20),
+    @endDate        varchar(20),
+    @discountRate   numeric(5,2) 
+
+as BEGIN
+    set @endDate =  convert(date, @endDate)
+    set @startDate = convert(date, @startDate)
+    IF @endDate < getdate()
+        exec sp_throw_error 52010
+
+    if @endDate < @startDate
+        exec sp_throw_error 52008
+
+    INSERt INTO Sales.Discount(StartDate, EndDate, DiscountRate)
+    VALUES(convert(date, @startDate), @endDate, cast(@discountRate as numeric(5,2)))
+END
+GO
+
 GO
 CREATE OR ALTER PROCEDURE Sales.sp_applyDiscount
     @discountId int,
@@ -288,6 +318,7 @@ AS BEGIN
 END
 GO
 
+
 CREATE OR ALTER PROC Sales.sp_deleteProductDiscount
     @discountId int,
     @productId int
@@ -295,7 +326,6 @@ as BEGIN
     IF EXISTS (SELECT * from Sales.ProductModel_Discount where ProductModelId = @productId and DiscountId = @discountId)
     BEGIN
         exec sp_throw_error 52011, 1, @discountId, @productId
-        return 0
     END
 
     delete from Sales.ProductModel_Discount where DiscountId = @discountId and ProductModelId = @productId
