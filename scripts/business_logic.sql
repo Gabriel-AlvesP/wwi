@@ -263,6 +263,10 @@ AS
     END
 GO
 
+--select * from Sales.Discount;
+--GO
+--exec Sales.sp_newDiscount '2023-05-03', '2025-06-01', 10.00
+--GO
 CREATE OR ALTER PROC Sales.sp_newDiscount
     @startDate      varchar(20),
     @endDate        varchar(20),
@@ -282,7 +286,12 @@ as BEGIN
 END
 GO
 
-GO
+--select * from Sales.ProductModel_Discount;
+--GO
+--exec Sales.sp_applyDiscount 1, 1
+--GO
+--select * from Sales.ProductModel_Discount
+--GO
 CREATE OR ALTER PROCEDURE Sales.sp_applyDiscount
     @discountId int,
     @productId int
@@ -332,6 +341,12 @@ as BEGIN
 END
 GO
 
+--select * from Sales.Discount;
+--GO
+--exec sales.sp_updateDiscountDates 1, '2023-05-19', '2023-05-29'
+--Go
+--select * from Sales.Discount
+--GO
 -- permitir alterar as datas de início e fim de uma promoção 
 -- Change 
 CREATE OR ALTER PROC Sales.sp_updateDiscountDates
@@ -358,11 +373,32 @@ AS BEGIN
 END
 GO
 
+
+--select * from Sales.Discount
+--GO
+--SET IDENTITY_INSERT Sales.Discount off
+--GO
+--INSERT INTO Sales.Discount(StartDate, EndDate, DiscountRate)
+--VALUES('2019-01-01', '2022-01-01', 5.00)
+--GO
+--select * from Sales.Discount
+--GO
+--exec Sales.sp_deleteOldDiscounts
+--GO
+--select * from Sales.Discount
+--Go
 -- Delete discounts that are no longer active
 CREATE OR ALTER PROC Sales.sp_deleteOldDiscounts
 AS BEGIN
     delete from Sales.Discount where EndDate < GETDATE()
 END
+GO
+
+select * from Authentication.SystemUser
+GO
+exec Authentication.sp_insertUser 1, 'client1@clients.com', 'strongPasswd'
+GO
+select * from Authentication.SystemUser
 GO
 
 -- Authentication
@@ -390,6 +426,12 @@ AS BEGIN
 END
 GO
 
+--select * from Authentication.SystemUser
+--go
+--exec Authentication.sp_updateUser 1, 'client1@clients.com', 'strongPasswd', 'newStrongPasswd'
+--GO
+--select * from Authentication.SystemUser
+--GO
 -- user udpate
 CREATE OR ALTER PROC Authentication.sp_updateUser
     @customerId int,
@@ -409,9 +451,9 @@ as BEGIN
     END
 
     DECLARE @hashed_passwd varchar(32) = convert(varchar(32), HASHBYTES('MD5', @oldPasswd)),
-    @hashed_newPasswd varchar(32) 
+    @hashed_newPasswd varchar(32)
 
-    IF NOT EXISTS(select * from Authentication.SystemUser where Email = @email and Passwd = @hashed_passwd)
+	IF NOT EXISTS(select * from Authentication.SystemUser where Email = @email and Passwd = @hashed_passwd)
     BEGIN
         exec sp_throw_error 52104
     END
@@ -422,8 +464,10 @@ as BEGIN
 END
 GO
 
+--exec Authentication.authenticateUser 'client1@clients.com', 'newStrongPasswd'
+--GO
 -- User authentication
-CREATE OR ALTER PROC Authentication.authenticateUser
+CREATE OR ALTER PROC Authentication.sp_authenticateUser --
     @email varchar(255),
     @passwd varchar(32)
 AS BEGIN
@@ -442,6 +486,10 @@ AS BEGIN
 END
 GO
 
+--exec Authentication.sp_recoverPasswd 'client1@clients.com'
+--GO
+--select * from Authentication.Token
+GO
 -- Recover password 
 CREATE OR ALTER PROC Authentication.sp_recoverPasswd
     @email varchar(255)
@@ -454,9 +502,10 @@ AS BEGIN
             
         set @token = convert(varchar(255), newid())
         set @hashed_token = convert(varchar(255), hashbytes('MD5', @token))
-        INSERT INTO Authentication.Token(Token, SystemUserId) VALUES(@hashed_token,@userId)
+        
+		INSERT INTO Authentication.Token(Token, SystemUserId) VALUES(@hashed_token,@userId)
 
-        print 'An email was sent to your account with a token access'
+        print 'An email was sent to your account with a token access: ' + @token --
 
     END
     ELSE 
@@ -466,6 +515,12 @@ AS BEGIN
 END
 GO
 
+--select * from Authentication.SystemUser
+--GO
+--exec Authentication.sp_restorePasswd '74ED0EB0-5306-4729-A6B2-59225B4906A2', 'TheRestored passwd'
+--GO
+--select * from Authentication.SystemUser
+--GO
 CREATE OR ALTER PROC Authentication.sp_restorePasswd
     @token varchar(255),
     @newPasswd varchar(32)
@@ -474,14 +529,18 @@ BEGIN
     DECLARE @userId int
 
     set @token = convert(varchar(255), hashbytes('MD5', @token))
-    IF NOT EXISTS (select * from Authentication.Token where Token = @token)
+    IF NOT EXISTS (select * from Authentication.Token where Token = @token and DATEADD(day, 1, SentDate) > GETDATE()) --
     BEGIN
         exec sp_throw_error 52106
     END
 
     select @userId = SystemUserId from Authentication.Token where Token = @token
 
+	set @newPasswd = convert(varchar(255), hashbytes('MD5', @token)) --
     update Authentication.SystemUser set Passwd = @newPasswd where CustomerId = @userId
-    PRINT 'Restore password was successful'
+
+	DELETE FROM Authentication.Token where Token = @token --
+    
+	PRINT 'Restore password was successful'
 END
 GO
